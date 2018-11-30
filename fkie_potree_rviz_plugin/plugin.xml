@@ -1,0 +1,9 @@
+<library path="lib/libfkie_potree_rviz_plugin">
+  <class name="fkie_potree_rviz_plugin/Potree"
+         type="fkie_potree_rviz_plugin::PotreeDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays large static point clouds in the Potree format
+    </description>
+  </class>
+</library>

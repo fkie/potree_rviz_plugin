@@ -1,0 +1,15 @@
+material rviz/potree_point
+{
+    technique
+    {
+        pass
+        {
+            diffuse vertexcolour
+            specular vertexcolour
+            ambient vertexcolour
+            lighting off
+            depth_check on
+            point_size 1
+        }
+    }
+}

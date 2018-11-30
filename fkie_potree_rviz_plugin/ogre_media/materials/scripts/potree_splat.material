@@ -1,0 +1,20 @@
+material rviz/potree_splat
+{
+    technique
+    {
+        pass
+        {
+            vertex_program_ref rviz/potree_color.vert
+            {
+            }
+            geometry_program_ref rviz/potree_quad.geom
+            {
+                param_named_auto size custom 0
+            }
+            fragment_program_ref rviz/potree_circle.frag
+            {
+                param_named_auto shading custom 1
+            }
+        }
+    }
+}
