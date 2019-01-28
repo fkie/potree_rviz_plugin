@@ -149,31 +149,30 @@ void PotreeVisual::preFindVisibleObjects(Ogre::SceneManager*, Ogre::SceneManager
                     remaining_points -= node->pointCount();
                     node->updateShaderParameters(size_per_pixel, cam->getProjectionType() == Ogre::ProjectionType::PT_PERSPECTIVE, z_scale);
                     node->setVisible(true);
+                    for (const std::shared_ptr<PotreeNode>& child : node->children())
+                    {
+                        if (child)
+                        {
+                            float p = priority(child, world, viewport);
+                            if (p > 0)
+                            {
+                                process_queue.push(child, p);
+                            }
+                            else
+                            {
+                                child->setVisible(false, true);
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     node->setVisible(false, true);
-                    continue;
                 }
             }
             else
             {
                 loading_thread_->scheduleForLoading(node);
-            }
-            for (const std::shared_ptr<PotreeNode>& child : node->children())
-            {
-                if (child)
-                {
-                    float p = priority(child, world, viewport);
-                    if (p > 0)
-                    {
-                        process_queue.push(child, p);
-                    }
-                    else
-                    {
-                        child->setVisible(false, true);
-                    }
-                }
             }
         }
         else
