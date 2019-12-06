@@ -48,5 +48,5 @@ void main()
     discard;
   }
   pixel_color = vec4(frag_color.xyz * (1 - shading.x * rsquared), 1);
-  gl_FragDepth = gl_FragCoord.z + sqrt(rsquared) * 0.001 * gl_FragCoord.w;
+  gl_FragDepth = gl_FragCoord.z * (1 + 0.001 * rsquared);
 }
