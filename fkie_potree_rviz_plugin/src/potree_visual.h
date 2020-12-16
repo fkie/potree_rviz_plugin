@@ -20,18 +20,20 @@
 #ifndef SRC_POTREE_VISUAL_H_
 #define SRC_POTREE_VISUAL_H_
 
-#include <memory>
-#include <OgreVector3.h>
+#include "priority_queue.h"
+
 #include <OgreQuaternion.h>
 #include <OgreSceneManager.h>
-#include "priority_queue.h"
+#include <OgreVector3.h>
 #include <ros/time.h>
+
+#include <memory>
 
 namespace Ogre
 {
 class SceneNode;
 class Camera;
-}
+}  // namespace Ogre
 
 namespace fkie_potree_rviz_plugin
 {
@@ -43,19 +45,27 @@ class LoadingThread;
 class PotreeVisual : protected Ogre::SceneManager::Listener
 {
 public:
-    PotreeVisual(const std::shared_ptr<CloudLoader>& loader, Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node);
+    PotreeVisual(const std::shared_ptr<CloudLoader>& loader,
+                 Ogre::SceneManager* scene_manager,
+                 Ogre::SceneNode* parent_node);
     ~PotreeVisual();
     void setVisible(bool visible);
     void setOrigin(const Ogre::Vector3& p, const Ogre::Quaternion& q);
     void setPointBudget(std::size_t budget);
-    void setPointSize (float size);
+    void setPointSize(float size);
     void setMinimumNodeSize(float size);
-    void enableHQRendering (bool enable, bool use_shading);
+    void enableHQRendering(bool enable, bool use_shading);
+
 protected:
-    virtual void preFindVisibleObjects(Ogre::SceneManager* source, Ogre::SceneManager::IlluminationRenderStage irs, Ogre::Viewport* viewport) override;
+    virtual void
+    preFindVisibleObjects(Ogre::SceneManager* source,
+                          Ogre::SceneManager::IlluminationRenderStage irs,
+                          Ogre::Viewport* viewport) override;
+
 private:
     void onNodeLoaded();
-    float priority (const std::shared_ptr<PotreeNode>& node, const Ogre::Matrix4& world, Ogre::Viewport* viewport) const;
+    float priority(const std::shared_ptr<PotreeNode>& node,
+                   const Ogre::Matrix4& world, Ogre::Viewport* viewport) const;
     Ogre::SceneManager* scene_manager_;
     Ogre::SceneNode* scene_node_;
     Ogre::Vector3 last_cam_pos_;
@@ -73,6 +83,6 @@ private:
     std::shared_ptr<LoadingThread> loading_thread_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif

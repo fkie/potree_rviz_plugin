@@ -21,14 +21,15 @@
 #define SRC_POTREE_DISPLAY_H_
 
 #ifndef Q_MOC_RUN
-#include <memory>
-#include <rviz/display.h>
-#include <rviz/properties/tf_frame_property.h>
-#include <rviz/properties/vector_property.h>
-#include <rviz/properties/quaternion_property.h>
-#include <rviz/properties/int_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/bool_property.h>
+#    include <rviz/display.h>
+#    include <rviz/properties/bool_property.h>
+#    include <rviz/properties/float_property.h>
+#    include <rviz/properties/int_property.h>
+#    include <rviz/properties/quaternion_property.h>
+#    include <rviz/properties/tf_frame_property.h>
+#    include <rviz/properties/vector_property.h>
+
+#    include <memory>
 #endif
 
 namespace fkie_potree_rviz_plugin
@@ -38,7 +39,7 @@ class PotreeVisual;
 
 class PotreeDisplay : public rviz::Display
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     PotreeDisplay();
 
@@ -60,10 +61,10 @@ private:
     rviz::QuaternionProperty* origin_rotation_property_;
     rviz::IntProperty* point_budget_property_;
     rviz::FloatProperty* point_size_property_;
-    rviz::BoolProperty* hq_render_property_, *shading_property_;
+    rviz::BoolProperty *hq_render_property_, *shading_property_;
     std::shared_ptr<PotreeVisual> visual_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif

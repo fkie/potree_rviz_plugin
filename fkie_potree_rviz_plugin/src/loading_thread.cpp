@@ -17,16 +17,19 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#include <functional>
-#include "cloud_loader.h"
 #include "loading_thread.h"
+
+#include "cloud_loader.h"
 #include "potree_node.h"
+
+#include <functional>
 
 namespace fkie_potree_rviz_plugin
 {
 
-LoadingThread::LoadingThread (const std::shared_ptr<CloudLoader>& loader)
-: running_(true), loader_(loader), thread_(std::bind(&LoadingThread::run, this))
+LoadingThread::LoadingThread(const std::shared_ptr<CloudLoader>& loader)
+    : running_(true), loader_(loader),
+      thread_(std::bind(&LoadingThread::run, this))
 {
 }
 
@@ -36,13 +39,15 @@ LoadingThread::~LoadingThread()
     running_ = false;
     cond_.notify_all();
     lock.unlock();
-    if (thread_.joinable()) thread_.join();
+    if (thread_.joinable())
+        thread_.join();
 }
 
 void LoadingThread::unscheduleAll()
 {
     std::lock_guard<std::mutex> lock{mutex_};
-    while (!need_to_load_.empty()) need_to_load_.pop();
+    while (!need_to_load_.empty())
+        need_to_load_.pop();
 }
 
 void LoadingThread::setNodeLoadedCallback(const std::function<void()>& func)
@@ -66,16 +71,19 @@ void LoadingThread::run()
         while (need_to_load_.empty())
         {
             cond_.wait(lock);
-            if (!running_) return;
+            if (!running_)
+                return;
         }
         std::shared_ptr<PotreeNode> node = need_to_load_.front();
         need_to_load_.pop();
-        if (node->isLoaded()) continue;
+        if (node->isLoaded())
+            continue;
         lock.unlock();
         loader_->loadPoints(node);
-        if (func_) func_();
+        if (func_)
+            func_();
         lock.lock();
     }
 }
 
-}
+}  // namespace fkie_potree_rviz_plugin

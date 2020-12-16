@@ -20,8 +20,9 @@
 #ifndef SRC_CLOUD_LOADER_H_
 #define SRC_CLOUD_LOADER_H_
 
-#include <boost/filesystem/path.hpp>
 #include "cloud_meta_data.h"
+
+#include <boost/filesystem/path.hpp>
 
 namespace fkie_potree_rviz_plugin
 {
@@ -34,20 +35,27 @@ class CloudLoader
 {
 public:
     CloudLoader(const fs::path& path);
-    const std::shared_ptr<CloudMetaData>& metaData() const { return meta_data_; }
+    const std::shared_ptr<CloudMetaData>& metaData() const
+    {
+        return meta_data_;
+    }
     std::shared_ptr<PotreeNode> loadHierarchy() const;
-    void loadPoints(const std::shared_ptr<PotreeNode>& node, bool recursive = false) const;
+    void loadPoints(const std::shared_ptr<PotreeNode>& node,
+                    bool recursive = false) const;
 
     static bool isValid(const fs::path& path, std::string& error_msg);
-    static fs::path fileName(const std::shared_ptr<CloudMetaData>& meta_data, const std::string& name, const std::string& extension);
+    static fs::path fileName(const std::shared_ptr<CloudMetaData>& meta_data,
+                             const std::string& name,
+                             const std::string& extension);
 
 private:
     void loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node) const;
-    static Ogre::AxisAlignedBox childBB(const Ogre::AxisAlignedBox& parent, int index);
+    static Ogre::AxisAlignedBox childBB(const Ogre::AxisAlignedBox& parent,
+                                        int index);
 
     std::shared_ptr<CloudMetaData> meta_data_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif /* SRC_CLOUD_LOADER_H_ */

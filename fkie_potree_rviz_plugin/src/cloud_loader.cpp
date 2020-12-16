@@ -19,11 +19,14 @@
  ****************************************************************************/
 
 #include "cloud_loader.h"
+
+#include "potree_node.h"
+
+#include <OgreManualObject.h>
 #include <boost/filesystem.hpp>
 #include <ros/console.h>
-#include "potree_node.h"
+
 #include <queue>
-#include <OgreManualObject.h>
 
 namespace fkie_potree_rviz_plugin
 {
@@ -31,7 +34,8 @@ namespace fkie_potree_rviz_plugin
 CloudLoader::CloudLoader(const fs::path& path)
 {
     std::string error_msg;
-    if (!isValid(path, error_msg)) throw std::runtime_error(error_msg);
+    if (!isValid(path, error_msg))
+        throw std::runtime_error(error_msg);
     fs::path cloud_file = path / "cloud.js";
     meta_data_ = std::make_shared<CloudMetaData>();
     meta_data_->readFromJson(cloud_file);
@@ -42,20 +46,21 @@ bool CloudLoader::isValid(const fs::path& path, std::string& error_msg)
     error_msg.clear();
     if (!fs::is_directory(path))
     {
-        error_msg = "not an existing folder"; return false;
+        error_msg = "not an existing folder";
+        return false;
     }
-    fs::path cloud_file = path / "cloud.js";
-    if (!fs::is_regular(cloud_file))
+    if (!fs::is_regular(path / "cloud.js"))
     {
-        error_msg = "not a Potree folder"; return false;
+        error_msg = "not a Potree folder";
+        return false;
     }
     try
     {
         CloudMetaData meta_data;
-        fs::path cloud_file = path / "cloud.js";
-        meta_data.readFromJson(cloud_file);
+        meta_data.readFromJson(path / "cloud.js");
         return true;
-    } catch (std::exception& e)
+    }
+    catch (std::exception& e)
     {
         error_msg = e.what();
         return false;
@@ -64,30 +69,37 @@ bool CloudLoader::isValid(const fs::path& path, std::string& error_msg)
 
 std::shared_ptr<PotreeNode> CloudLoader::loadHierarchy() const
 {
-    std::shared_ptr<PotreeNode> root_node = std::make_shared<PotreeNode>("", meta_data_, meta_data_->bounding_box_);
+    std::shared_ptr<PotreeNode> root_node =
+        std::make_shared<PotreeNode>("", meta_data_, meta_data_->bounding_box_);
     loadNodeHierarchy(root_node);
     return root_node;
 }
 
-void CloudLoader::loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node) const
+void CloudLoader::loadNodeHierarchy(
+    const std::shared_ptr<PotreeNode>& root_node) const
 {
     std::queue<std::shared_ptr<PotreeNode>> next_nodes;
     next_nodes.push(root_node);
     char cfg[5];
     fs::path hrc_file = fileName(meta_data_, root_node->name(), ".hrc");
     std::ifstream f{hrc_file.c_str()};
-    if (!f.good()) ROS_ERROR_STREAM("failed to read file: " << hrc_file);
+    if (!f.good())
+        ROS_ERROR_STREAM("failed to read file: " << hrc_file);
     f.read(cfg, 5);
     while (f.good())
     {
-        std::shared_ptr<PotreeNode> node = next_nodes.front(); next_nodes.pop();
+        std::shared_ptr<PotreeNode> node = next_nodes.front();
+        next_nodes.pop();
         for (int j = 0; j < 8; ++j)
         {
             if (cfg[0] & (1 << j))
             {
                 if (!node->children_[j])
                 {
-                    std::shared_ptr<PotreeNode> child = std::make_shared<PotreeNode>(node->name() + std::to_string(j), meta_data_, childBB(node->boundingBox(), j), node);
+                    std::shared_ptr<PotreeNode> child =
+                        std::make_shared<PotreeNode>(
+                            node->name() + std::to_string(j), meta_data_,
+                            childBB(node->boundingBox(), j), node);
                     node->children_[j] = child;
                 }
                 next_nodes.push(node->children_[j]);
@@ -95,15 +107,19 @@ void CloudLoader::loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node
         }
         f.read(cfg, 5);
     }
-    std::set<PotreeNode*> seen; // save the shared_ptr copy overhead and just track seen nodes by their address
+    std::set<PotreeNode*> seen;  // save the shared_ptr copy overhead and just
+                                 // track seen nodes by their address
     while (!next_nodes.empty())
     {
-        std::shared_ptr<PotreeNode> node = next_nodes.front()->parent().lock(); next_nodes.pop();
-        if (node && seen.insert(node.get()).second) loadNodeHierarchy(node);
+        std::shared_ptr<PotreeNode> node = next_nodes.front()->parent().lock();
+        next_nodes.pop();
+        if (node && seen.insert(node.get()).second)
+            loadNodeHierarchy(node);
     }
 }
 
-void CloudLoader::loadPoints(const std::shared_ptr<PotreeNode>& node, bool recursive) const
+void CloudLoader::loadPoints(const std::shared_ptr<PotreeNode>& node,
+                             bool recursive) const
 {
     fs::path bin_file = fileName(meta_data_, node->name(), ".bin");
     if (!fs::is_regular_file(bin_file))
@@ -150,9 +166,15 @@ void CloudLoader::loadPoints(const std::shared_ptr<PotreeNode>& node, bool recur
             for (std::size_t i = 0; i < point_count; ++i)
             {
                 std::size_t index = offset + i * meta_data_->point_byte_size_;
-                float x = *reinterpret_cast<std::uint32_t*>(&data[index + 0]) * meta_data_->scale_ + translate.x;
-                float y = *reinterpret_cast<std::uint32_t*>(&data[index + 4]) * meta_data_->scale_ + translate.y;
-                float z = *reinterpret_cast<std::uint32_t*>(&data[index + 8]) * meta_data_->scale_ + translate.z;
+                float x = *reinterpret_cast<std::uint32_t*>(&data[index + 0])
+                              * meta_data_->scale_
+                          + translate.x;
+                float y = *reinterpret_cast<std::uint32_t*>(&data[index + 4])
+                              * meta_data_->scale_
+                          + translate.y;
+                float z = *reinterpret_cast<std::uint32_t*>(&data[index + 8])
+                              * meta_data_->scale_
+                          + translate.z;
                 points.push_back(Ogre::Vector3(x, y, z));
             }
         }
@@ -193,19 +215,23 @@ void CloudLoader::loadPoints(const std::shared_ptr<PotreeNode>& node, bool recur
     {
         for (const std::shared_ptr<PotreeNode>& child : node->children_)
         {
-            if (child) loadPoints(child, true);
+            if (child)
+                loadPoints(child, true);
         }
     }
 }
 
-fs::path CloudLoader::fileName(const std::shared_ptr<CloudMetaData>& meta_data, const std::string& name, const std::string& extension)
+fs::path CloudLoader::fileName(const std::shared_ptr<CloudMetaData>& meta_data,
+                               const std::string& name,
+                               const std::string& extension)
 {
     fs::path octree_dir = meta_data->cloud_path_ / meta_data->octree_dir_;
     fs::path result;
     std::size_t levels = name.length() / meta_data->hierarchy_step_size_;
     for (std::size_t i = 0; i < levels; ++i)
     {
-        result /= name.substr(i * meta_data->hierarchy_step_size_, meta_data->hierarchy_step_size_);
+        result /= name.substr(i * meta_data->hierarchy_step_size_,
+                              meta_data->hierarchy_step_size_);
     }
     result /= std::string("r") + name + extension;
     if (fs::is_regular_file(octree_dir / "u" / result))
@@ -213,14 +239,25 @@ fs::path CloudLoader::fileName(const std::shared_ptr<CloudMetaData>& meta_data, 
     return octree_dir / "r" / result;
 }
 
-Ogre::AxisAlignedBox CloudLoader::childBB(const Ogre::AxisAlignedBox& parent, int index)
+Ogre::AxisAlignedBox CloudLoader::childBB(const Ogre::AxisAlignedBox& parent,
+                                          int index)
 {
     assert(!parent.isInfinite());
-    Ogre::Vector3 min = parent.getMinimum(), max = parent.getMaximum(), half_size = parent.getHalfSize();
-    if (index & 1) min.z += half_size.z; else max.z -= half_size.z;
-    if (index & 2) min.y += half_size.y; else max.y -= half_size.y;
-    if (index & 4) min.x += half_size.x; else max.x -= half_size.x;
+    Ogre::Vector3 min = parent.getMinimum(), max = parent.getMaximum(),
+                  half_size = parent.getHalfSize();
+    if (index & 1)
+        min.z += half_size.z;
+    else
+        max.z -= half_size.z;
+    if (index & 2)
+        min.y += half_size.y;
+    else
+        max.y -= half_size.y;
+    if (index & 4)
+        min.x += half_size.x;
+    else
+        max.x -= half_size.x;
     return Ogre::AxisAlignedBox(min, max);
 }
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin

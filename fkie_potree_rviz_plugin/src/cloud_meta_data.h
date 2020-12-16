@@ -20,9 +20,10 @@
 #ifndef SRC_CLOUD_META_DATA_H_
 #define SRC_CLOUD_META_DATA_H_
 
-#include <string>
-#include <boost/filesystem/path.hpp>
 #include <OgreAxisAlignedBox.h>
+#include <boost/filesystem/path.hpp>
+
+#include <string>
 
 namespace fkie_potree_rviz_plugin
 {
@@ -34,7 +35,10 @@ namespace fs = boost::filesystem;
 class CloudMetaData
 {
 public:
-    std::size_t pointCount() const { return point_count_; }
+    std::size_t pointCount() const
+    {
+        return point_count_;
+    }
     void readFromJson(const fs::path& file_name);
     static std::size_t sizeOf(const std::string& attr);
 
@@ -51,6 +55,6 @@ private:
     std::vector<std::string> point_attributes_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif /* SRC_CLOUD_META_DATA_H_ */

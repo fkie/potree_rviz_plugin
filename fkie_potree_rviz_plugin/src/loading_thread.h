@@ -20,11 +20,12 @@
 #ifndef SRC_LOADING_THREAD_H_
 #define SRC_LOADING_THREAD_H_
 
-#include <memory>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
+
+#include <memory>
+#include <mutex>
 #include <queue>
+#include <thread>
 
 namespace fkie_potree_rviz_plugin
 {
@@ -34,11 +35,12 @@ class CloudLoader;
 class LoadingThread
 {
 public:
-    explicit LoadingThread (const std::shared_ptr<CloudLoader>& loader);
+    explicit LoadingThread(const std::shared_ptr<CloudLoader>& loader);
     ~LoadingThread();
     void unscheduleAll();
-    void scheduleForLoading (const std::shared_ptr<PotreeNode>& node);
-    void setNodeLoadedCallback (const std::function<void()>& func);
+    void scheduleForLoading(const std::shared_ptr<PotreeNode>& node);
+    void setNodeLoadedCallback(const std::function<void()>& func);
+
 private:
     void run();
     std::function<void()> func_;
@@ -50,6 +52,6 @@ private:
     std::thread thread_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif /* SRC_LOADING_THREAD_H_ */

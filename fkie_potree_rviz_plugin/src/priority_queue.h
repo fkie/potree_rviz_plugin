@@ -54,6 +54,7 @@ public:
     {
         queue_ = std::move(Queue());
     }
+
 private:
     using Element = std::tuple<T, P>;
     struct Compare
@@ -67,7 +68,6 @@ private:
     Queue queue_;
 };
 
-} // namespace fkie_rviz_plugin_potree
-
+}  // namespace fkie_potree_rviz_plugin
 
 #endif /* SRC_PRIORITY_QUEUE_H_ */

@@ -20,18 +20,19 @@
 #ifndef SRC_POTREE_NODE_H_
 #define SRC_POTREE_NODE_H_
 
+#include <OgreAxisAlignedBox.h>
+#include <OgreColourValue.h>
+#include <OgreVector3.h>
+
 #include <array>
 #include <memory>
 #include <mutex>
-#include <OgreAxisAlignedBox.h>
-#include <OgreVector3.h>
-#include <OgreColourValue.h>
 
 namespace Ogre
 {
 class ManualObject;
 class SceneNode;
-}
+}  // namespace Ogre
 
 namespace fkie_potree_rviz_plugin
 {
@@ -42,25 +43,62 @@ class CloudLoader;
 class PotreeNode
 {
 public:
-    PotreeNode(const std::string& name, const std::shared_ptr<CloudMetaData>& meta_data, const Ogre::AxisAlignedBox& bounding_box, const std::weak_ptr<PotreeNode>& parent = std::weak_ptr<PotreeNode>());
+    PotreeNode(
+        const std::string& name,
+        const std::shared_ptr<CloudMetaData>& meta_data,
+        const Ogre::AxisAlignedBox& bounding_box,
+        const std::weak_ptr<PotreeNode>& parent = std::weak_ptr<PotreeNode>());
     ~PotreeNode();
 
-    const std::string& name() const { return name_; }
-    std::size_t level() const { return name_.length(); }
-    const Ogre::AxisAlignedBox& boundingBox() const { return bounding_box_; }
-    const std::weak_ptr<PotreeNode>& parent() const { return parent_; }
-    const std::array<std::shared_ptr<PotreeNode>, 8>& children() const { return children_; }
-    bool isLoaded() const { std::lock_guard<std::mutex> lock{mutex_}; return loaded_; }
-    bool hasVertexBuffer() const { std::lock_guard<std::mutex> lock{mutex_}; return !!vertex_data_; };
-    bool isAttached() const { std::lock_guard<std::mutex> lock{mutex_}; return attached_scene_ != nullptr; }
+    const std::string& name() const
+    {
+        return name_;
+    }
+    std::size_t level() const
+    {
+        return name_.length();
+    }
+    const Ogre::AxisAlignedBox& boundingBox() const
+    {
+        return bounding_box_;
+    }
+    const std::weak_ptr<PotreeNode>& parent() const
+    {
+        return parent_;
+    }
+    const std::array<std::shared_ptr<PotreeNode>, 8>& children() const
+    {
+        return children_;
+    }
+    bool isLoaded() const
+    {
+        std::lock_guard<std::mutex> lock{mutex_};
+        return loaded_;
+    }
+    bool hasVertexBuffer() const
+    {
+        std::lock_guard<std::mutex> lock{mutex_};
+        return !!vertex_data_;
+    };
+    bool isAttached() const
+    {
+        std::lock_guard<std::mutex> lock{mutex_};
+        return attached_scene_ != nullptr;
+    }
     bool isVisible() const;
-    std::size_t pointCount() const { std::lock_guard<std::mutex> lock{mutex_}; return point_count_; }
-    void enableHQRendering(bool enable, bool use_shading, bool recursive = false);
+    std::size_t pointCount() const
+    {
+        std::lock_guard<std::mutex> lock{mutex_};
+        return point_count_;
+    }
+    void enableHQRendering(bool enable, bool use_shading,
+                           bool recursive = false);
     void unload(bool recursive = false);
     void setVisible(bool visible, bool recursive = false);
     void createVertexBuffer();
-    void setPointSize (float size, bool recursive = false);
-    void updateShaderParameters (float size_per_pixel, bool is_ortho_projection, float z_scale);
+    void setPointSize(float size, bool recursive = false);
+    void updateShaderParameters(float size_per_pixel, bool is_ortho_projection,
+                                float z_scale);
     void attachToScene(Ogre::SceneNode* scene, bool recursive = false);
     void detachFromScene(bool recursive = false);
 
@@ -84,6 +122,6 @@ private:
     std::vector<Ogre::ColourValue> colors_;
 };
 
-} // namespace fkie_rviz_plugin_potree
+}  // namespace fkie_potree_rviz_plugin
 
 #endif /* SRC_POTREE_NODE_H_ */
