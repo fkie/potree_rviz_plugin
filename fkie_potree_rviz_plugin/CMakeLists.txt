@@ -76,6 +76,10 @@ add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  CXX_VISIBILITY_PRESET "hidden"
+  VISIBILITY_INLINES_HIDDEN ON
+)
 target_link_libraries(${PROJECT_NAME}
   jsoncpp_lib
   ${Boost_LIBRARIES}
