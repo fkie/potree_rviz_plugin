@@ -49,6 +49,11 @@ bool CloudLoader::isValid(const fs::path& path, std::string& error_msg)
         error_msg = "not an existing folder";
         return false;
     }
+    if (fs::is_regular(path / "metadata.json"))
+    {
+        error_msg = "unsupported Potree 2.0 format";
+        return false;
+    }
     if (!fs::is_regular(path / "cloud.js"))
     {
         error_msg = "not a Potree folder";
