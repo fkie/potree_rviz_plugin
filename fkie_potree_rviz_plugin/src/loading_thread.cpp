@@ -22,8 +22,6 @@
 #include "cloud_loader.h"
 #include "potree_node.h"
 
-#include <functional>
-
 namespace fkie_potree_rviz_plugin
 {
 
