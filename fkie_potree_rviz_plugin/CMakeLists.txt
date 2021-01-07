@@ -21,9 +21,6 @@
 cmake_minimum_required(VERSION 3.1)
 project(fkie_potree_rviz_plugin)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 ###############################################
 # Find catkin macros, packages, and libraries #
 ###############################################
@@ -86,6 +83,7 @@ target_link_libraries(${PROJECT_NAME}
   ${QT_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 ###########
 # Install #
