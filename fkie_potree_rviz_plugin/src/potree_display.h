@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +61,7 @@ private:
     rviz::QuaternionProperty* origin_rotation_property_;
     rviz::IntProperty* point_budget_property_;
     rviz::FloatProperty* point_size_property_;
-    rviz::BoolProperty *hq_render_property_, *shading_property_;
+    rviz::BoolProperty *splat_render_property_, *shading_property_;
     std::shared_ptr<PotreeVisual> visual_;
 };
 

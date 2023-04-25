@@ -1,4 +1,4 @@
-#version 150
+#version 130
 #extension GL_ARB_conservative_depth : enable
 
 /****************************************************************************
@@ -21,32 +21,31 @@
  *
  ****************************************************************************/
 
-// rasterizes a little camera-facing cone that looks like a shaded circle
-// and merges nicely with surrounding points in dense point clouds
+uniform mat4 projection_matrix;
 
-uniform vec4 shading;
+in vec3 v_position;
+in vec3 v_color;
+in float v_radius;
 
-// These attributes are passed from the geometry shader
-in vec4 frag_color;
-in vec4 tex_coord;
-
-// The output variable will automatically become the fragment's color
+// Output color
 out vec4 pixel_color;
-
-// Help the renderer to avoid shader invocations for fragments which will be
-// discarded anyway
-layout(depth_greater) out float gl_FragDepth;
+#ifdef GL_ARB_conservative_depth
+layout(depth_less) out float gl_FragDepth;
+#endif
 
 void main()
 {
-  float ax = tex_coord.x;
-  float ay = tex_coord.y;
+    float u = 2.0 * gl_PointCoord.x - 1.0;
+    float v = 2.0 * gl_PointCoord.y - 1.0;
+	float wi = 0.0 - ( u*u + v*v);
+	if (wi < -1.0)
+		discard;
+	vec4 pos = vec4(v_position, 1.0);
+	pos.z += wi * v_radius;
+	pos = projection_matrix * pos;
+	pos = pos / pos.w;
+    gl_FragDepth = pos.z;
 
-  float rsquared = ax*ax+ay*ay;
-  if (rsquared >= 1)
-  {
-    discard;
-  }
-  pixel_color = vec4(frag_color.xyz * (1 - shading.x * rsquared), 1);
-  gl_FragDepth = gl_FragCoord.z * (1 + 0.001 * rsquared);
+	pixel_color.a = 1.0;
+	pixel_color.rgb = v_color;
 }

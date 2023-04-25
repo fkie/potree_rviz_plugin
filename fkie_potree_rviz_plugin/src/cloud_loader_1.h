@@ -17,38 +17,34 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#ifndef SRC_CLOUD_LOADER_H_
-#define SRC_CLOUD_LOADER_H_
+#ifndef SRC_CLOUD_LOADER_1_H_
+#define SRC_CLOUD_LOADER_1_H_
 
-#include "cloud_meta_data.h"
-
-#include <OgreAxisAlignedBox.h>
-#include <boost/filesystem/path.hpp>
+#include "cloud_loader.h"
 
 namespace fkie_potree_rviz_plugin
 {
 
-namespace fs = boost::filesystem;
-
-class PotreeNode;
-
-class CloudLoader
+class CloudLoader1 : public CloudLoader
 {
 public:
-    virtual std::shared_ptr<const CloudMetaData> metaData() const = 0;
-    virtual std::shared_ptr<PotreeNode> loadHierarchy() const = 0;
+    explicit CloudLoader1(const std::shared_ptr<CloudMetaData>& meta_data);
+    virtual std::shared_ptr<const CloudMetaData> metaData() const override;
+    virtual std::shared_ptr<PotreeNode> loadHierarchy() const override;
     virtual std::size_t
-    estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const = 0;
+    estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const override;
     virtual void loadPoints(const std::shared_ptr<PotreeNode>& node,
-                            bool recursive = false) const = 0;
+                            bool recursive = false) const override;
 
-    static std::shared_ptr<CloudLoader> create(const fs::path& path);
+private:
+    void loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node) const;
+    static fs::path fileName(const std::shared_ptr<CloudMetaData>& meta_data,
+                             const std::string& name,
+                             const std::string& extension);
 
-protected:
-    static Ogre::AxisAlignedBox childBB(const Ogre::AxisAlignedBox& parent,
-                                        int index);
+    std::shared_ptr<CloudMetaData> meta_data_;
 };
 
 }  // namespace fkie_potree_rviz_plugin
 
-#endif /* SRC_CLOUD_LOADER_H_ */
+#endif /* SRC_CLOUD_LOADER_1_H_ */

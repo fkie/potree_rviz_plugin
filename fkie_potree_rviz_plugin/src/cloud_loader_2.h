@@ -17,57 +17,31 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#ifndef SRC_PRIORITY_QUEUE_H_
-#define SRC_PRIORITY_QUEUE_H_
+#ifndef SRC_CLOUD_LOADER_2_H_
+#define SRC_CLOUD_LOADER_2_H_
 
-#include <queue>
-#include <tuple>
+#include "cloud_loader.h"
 
 namespace fkie_potree_rviz_plugin
 {
 
-template<class T, class P>
-class PriorityQueue
+class CloudLoader2 : public CloudLoader
 {
 public:
-    void push(const T& item, const P& priority)
-    {
-        queue_.emplace(item, priority);
-    }
-    const T& top() const
-    {
-        return std::get<0>(queue_.top());
-    }
-    bool empty() const
-    {
-        return queue_.empty();
-    }
-    std::size_t size() const
-    {
-        return queue_.size();
-    }
-    void pop()
-    {
-        queue_.pop();
-    }
-    void clear()
-    {
-        queue_ = std::move(Queue());
-    }
+    explicit CloudLoader2(const std::shared_ptr<CloudMetaData>& meta_data);
+    virtual std::shared_ptr<const CloudMetaData> metaData() const override;
+    virtual std::shared_ptr<PotreeNode> loadHierarchy() const override;
+    virtual std::size_t
+    estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const override;
+    virtual void loadPoints(const std::shared_ptr<PotreeNode>& node,
+                            bool recursive = false) const override;
 
 private:
-    using Element = std::tuple<T, P>;
-    struct Compare
-    {
-        bool operator()(const Element& e1, const Element& e2)
-        {
-            return std::get<1>(e1) < std::get<1>(e2);
-        }
-    };
-    using Queue = std::priority_queue<Element, std::vector<Element>, Compare>;
-    Queue queue_;
+    void loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node) const;
+
+    std::shared_ptr<CloudMetaData> meta_data_;
 };
 
 }  // namespace fkie_potree_rviz_plugin
 
-#endif /* SRC_PRIORITY_QUEUE_H_ */
+#endif /* SRC_CLOUD_LOADER_2_H_ */

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,8 @@
 
 #include "potree_node.h"
 
+#include "cloud_meta_data.h"
+
 #include <OgreGpuProgramParams.h>
 #include <OgreManualObject.h>
 #include <OgreMaterial.h>
@@ -37,8 +39,7 @@ PotreeNode::PotreeNode(const std::string& name,
                        const Ogre::AxisAlignedBox& bounding_box,
                        const std::weak_ptr<PotreeNode>& parent)
     : name_(name), meta_data_(meta_data), bounding_box_(bounding_box),
-      parent_(parent), loaded_(false), hq_render_(false), point_size_(1),
-      attached_scene_(nullptr)
+      parent_(parent)
 {
 }
 
@@ -50,12 +51,11 @@ PotreeNode::~PotreeNode()
 void PotreeNode::createVertexBuffer()
 {
     std::lock_guard<std::mutex> lock{mutex_};
-    if (!loaded_ || vertex_data_)
+    if (!loaded_ || point_count_ == 0 || vertex_data_)
         return;
     vertex_data_ = std::make_shared<Ogre::ManualObject>(unique_id_);
     vertex_data_->estimateVertexCount(point_count_);
-    vertex_data_->begin(getMaterial(), Ogre::RenderOperation::OT_POINT_LIST,
-                        "rviz");
+    vertex_data_->begin(getMaterial(), Ogre::RenderOperation::OT_POINT_LIST);
     for (std::size_t i = 0; i < point_count_; ++i)
     {
         vertex_data_->position(points_[i]);
@@ -67,25 +67,23 @@ void PotreeNode::createVertexBuffer()
     colors_.clear();
 }
 
-void PotreeNode::enableHQRendering(bool enable, bool use_shading,
-                                   bool recursive)
+void PotreeNode::enableSplatRendering(bool enable, bool recursive)
 {
     std::lock_guard<std::mutex> lock{mutex_};
-    if (enable != hq_render_)
+    if (enable != splat_rendering_)
     {
-        hq_render_ = enable;
+        splat_rendering_ = enable;
         if (vertex_data_)
         {
-            vertex_data_->setMaterialName(0, getMaterial(), "rviz");
+            vertex_data_->setMaterialName(0, getMaterial());
         }
     }
-    use_shading_ = use_shading;
     if (recursive)
     {
         for (const std::shared_ptr<PotreeNode>& child : children_)
         {
             if (child)
-                child->enableHQRendering(enable, use_shading, true);
+                child->enableSplatRendering(enable, true);
         }
     }
 }
@@ -96,7 +94,7 @@ void PotreeNode::setPointSize(float point_size, bool recursive)
     point_size_ = point_size;
     if (vertex_data_)
     {
-        vertex_data_->setMaterialName(0, getMaterial(), "rviz");
+        vertex_data_->setMaterialName(0, getMaterial());
     }
     if (recursive)
     {
@@ -108,20 +106,32 @@ void PotreeNode::setPointSize(float point_size, bool recursive)
     }
 }
 
-void PotreeNode::updateShaderParameters(float size_per_pixel,
-                                        bool is_perspective_projection,
-                                        float z_scale)
+float PotreeNode::spacing() const
+{
+    return meta_data_->spacing() / (1 << name_.length());
+}
+
+void PotreeNode::updateShaderParameters(bool is_ortho_projection, float spacing)
 {
     if (vertex_data_)
     {
         if (vertex_data_->getNumSections() > 0)
         {
-            vertex_data_->getSection(0)->setCustomParameter(
-                0, Ogre::Vector4(point_size_ * size_per_pixel,
-                                 is_perspective_projection ? 1 : 0,
-                                 z_scale / point_size_, 0));
-            vertex_data_->getSection(0)->setCustomParameter(
-                1, Ogre::Vector4(use_shading_ ? 1 : 0, 0, 0, 0));
+            Ogre::Technique* technique =
+                vertex_data_->getSection(0)->getMaterial()->getTechnique(0);
+            for (std::size_t i = 0; i < technique->getNumPasses(); ++i)
+            {
+                Ogre::Pass* pass = technique->getPass(i);
+                if (pass && pass->hasVertexProgram())
+                {
+                    Ogre::GpuProgramParametersSharedPtr params =
+                        pass->getVertexProgramParameters();
+                    params->setNamedConstant("is_ortho_projection",
+                                             is_ortho_projection ? 1 : 0);
+                    params->setNamedConstant("spacing", spacing);
+                    params->setNamedConstant("splat_size", point_size_);
+                }
+            }
         }
     }
 }
@@ -175,7 +185,6 @@ void PotreeNode::unload(bool recursive)
     vertex_data_.reset();
     points_.clear();
     colors_.clear();
-    point_count_ = 0;
     loaded_ = false;
     if (recursive)
     {
@@ -212,20 +221,22 @@ void PotreeNode::setVisible(bool visible, bool recursive)
 
 std::string PotreeNode::getMaterial()
 {
-    if (hq_render_)
+    if (splat_rendering_)
     {
         Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(
-            "rviz/potree_splat");
+            "potree_splat",
+            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         if (!m.isNull())
-            return "rviz/potree_splat";
+            return "potree_splat";
     }
-    std::string material = "rviz/potree_point" + std::to_string(point_size_);
+    std::string material = "potree_point" + std::to_string(point_size_);
     Ogre::MaterialPtr m =
         Ogre::MaterialManager::getSingleton().getByName(material);
     if (m.isNull())
     {
         Ogre::MaterialPtr m0 = Ogre::MaterialManager::getSingleton().getByName(
-            "rviz/potree_point");
+            "potree_point",
+            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         m = m0->clone(material);
         m->getTechnique(0)->getPass(0)->setPointSize(point_size_);
     }

@@ -1,7 +1,7 @@
 ############################################################################
 #
 # fkie_potree_rviz_plugin
-# Copyright © 2018 Fraunhofer FKIE
+# Copyright © 2018-2023 Fraunhofer FKIE
 # Author: Timo Röhling
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,6 @@ catkin_package(
 #########
 
 add_definitions(-DQT_NO_KEYWORDS)
-
 include_directories(SYSTEM
   ${catkin_INCLUDE_DIRS}
   ${QT_INCLUDE_DIRS}
@@ -63,6 +62,8 @@ include_directories(SYSTEM
 )
 add_library(${PROJECT_NAME}
   src/cloud_loader.cpp
+  src/cloud_loader_1.cpp
+  src/cloud_loader_2.cpp
   src/cloud_meta_data.cpp
   src/loading_thread.cpp
   src/potree_display.cpp
@@ -84,7 +85,6 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
-
 ###########
 # Install #
 ###########

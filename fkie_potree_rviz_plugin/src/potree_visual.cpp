@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
+#include <OgreViewport.h>
 #include <ros/console.h>
 
 #include <cmath>
@@ -63,15 +64,16 @@ PotreeVisual::PotreeVisual(const std::shared_ptr<CloudLoader>& loader,
 {
     scene_manager_->addListener(this);
     loading_thread_->setNodeLoadedCallback(
-        std::bind(&PotreeVisual::onNodeLoaded, this));
+        std::bind(&PotreeVisual::onNodeLoaded, this, std::placeholders::_1));
 }
 
 PotreeVisual::~PotreeVisual()
 {
     scene_manager_->removeListener(this);
     // We delete everything explicitly that might access the scene node
-    root_node_.reset();
+    loaded_.clear();
     loading_thread_.reset();
+    root_node_.reset();
     // Now that everything is detached from the scene, we can safely delete the
     // scene node itself
     scene_manager_->destroySceneNode(scene_node_);
@@ -101,10 +103,9 @@ void PotreeVisual::setPointSize(float size)
     appearance_changed_ = true;
 }
 
-void PotreeVisual::enableHQRendering(bool enable, bool use_shading)
+void PotreeVisual::enableSplatRendering(bool enable)
 {
-    hq_render_ = enable;
-    use_shading_ = use_shading;
+    splat_rendering_ = enable;
     appearance_changed_ = true;
 }
 
@@ -114,7 +115,7 @@ void PotreeVisual::setMinimumNodeSize(float size)
     appearance_changed_ = true;
 }
 
-void PotreeVisual::onNodeLoaded()
+void PotreeVisual::onNodeLoaded(const std::shared_ptr<PotreeNode>&)
 {
     force_update_ = true;
 }
@@ -144,18 +145,16 @@ void PotreeVisual::preFindVisibleObjects(
     if (appearance_changed_)
     {
         root_node_->setPointSize(point_size_, true);
-        root_node_->enableHQRendering(hq_render_, use_shading_, true);
+        root_node_->enableSplatRendering(splat_rendering_, true);
         appearance_changed_ = false;
     }
     PriorityQueue<std::shared_ptr<PotreeNode>, float> process_queue;
+    std::vector<std::shared_ptr<PotreeNode>> active_nodes;
     process_queue.push(root_node_, 0);
     std::size_t remaining_points = point_budget_;
-    float size_per_pixel =
-        std::tan(cam->getFOVy().valueRadians()) / viewport->getActualHeight();
-    float z_scale = std::sqrt(proj_matrix[0][0] * proj_matrix[0][0]
-                              + proj_matrix[1][0] * proj_matrix[1][0]
-                              + proj_matrix[2][0] * proj_matrix[2][0]);
+    std::size_t remaining_nodes = node_budget_;
     Ogre::Matrix4 world = scene_node_->_getFullTransform();
+    float lowest_spacing = std::numeric_limits<float>::max();
     while (!process_queue.empty())
     {
         std::shared_ptr<PotreeNode> node = process_queue.top();
@@ -164,21 +163,25 @@ void PotreeVisual::preFindVisibleObjects(
         bb.transform(world);
         if (cam->isVisible(bb))
         {
-            if (node->isLoaded())
+            std::size_t point_count = node->pointCount();
+            if (point_count == 0)
+                point_count = loader_->estimatedPointCount(node);
+            if (point_count <= remaining_points && remaining_nodes > 0)
             {
-                if (node->pointCount() <= remaining_points)
+                remaining_points -= point_count;
+                --remaining_nodes;
+                if (node->isLoaded())
                 {
                     if (!node->hasVertexBuffer())
                         node->createVertexBuffer();
                     if (!node->isAttached())
                         node->attachToScene(scene_node_);
-                    remaining_points -= node->pointCount();
-                    node->updateShaderParameters(
-                        size_per_pixel,
-                        cam->getProjectionType()
-                            == Ogre::ProjectionType::PT_PERSPECTIVE,
-                        z_scale);
                     node->setVisible(true);
+                    float spacing = node->spacing();
+                    if (spacing < lowest_spacing)
+                        lowest_spacing = spacing;
+                    active_nodes.push_back(node);
+                    updateLRU(node);
                     for (const std::shared_ptr<PotreeNode>& child :
                          node->children())
                     {
@@ -198,12 +201,12 @@ void PotreeVisual::preFindVisibleObjects(
                 }
                 else
                 {
-                    node->setVisible(false, true);
+                    loading_thread_->scheduleForLoading(node);
                 }
             }
             else
             {
-                loading_thread_->scheduleForLoading(node);
+                node->setVisible(false, true);
             }
         }
         else
@@ -211,6 +214,13 @@ void PotreeVisual::preFindVisibleObjects(
             node->setVisible(false, true);
         }
     }
+    for (std::shared_ptr<PotreeNode>& node : active_nodes)
+    {
+        node->updateShaderParameters(
+            cam->getProjectionType() == Ogre::ProjectionType::PT_ORTHOGRAPHIC,
+            lowest_spacing);
+    }
+    unloadUnused();
 }
 
 float PotreeVisual::priority(const std::shared_ptr<PotreeNode>& node,
@@ -226,24 +236,46 @@ float PotreeVisual::priority(const std::shared_ptr<PotreeNode>& node,
     float projected_size;
     if (cam->getProjectionType() == Ogre::ProjectionType::PT_PERSPECTIVE)
     {
-        float slope = std::tan(cam->getFOVy().valueRadians());
+        float slope = std::tan(0.5 * cam->getFOVy().valueRadians());
         float distance = (center - cam_pos).length();
         projected_size = 0.5f * viewport->getActualHeight() * bounding_radius
                          / (slope * distance);
         if (projected_size < minimum_node_size_)
             return -1; /* ignore */
+        if (distance - bounding_radius < 0)
+            return std::numeric_limits<float>::max(); /* camera is inside,
+                                                         prioritize */
     }
     else
     {
         projected_size = bounding_radius;
     }
-    Ogre::Vector3 cam_forward = cam->getRealDirection();
-    Ogre::Vector3 cam_to_node = (center - cam_pos).normalisedCopy();
-    float angle =
-        std::acos(cam_forward.x * cam_to_node.x + cam_forward.y * cam_to_node.y
-                  + cam_forward.z * cam_to_node.z);
-    float angle_weight = std::abs(angle) + 1;
-    return projected_size / angle_weight;
+    return projected_size;
+}
+
+void PotreeVisual::updateLRU(const std::shared_ptr<PotreeNode>& node)
+{
+    auto it = load_map_.find(node.get());
+    loaded_.push_front(node);
+    if (it != load_map_.end())
+        loaded_.erase(it->second);
+    load_map_[node.get()] = loaded_.begin();
+}
+
+void PotreeVisual::unloadUnused()
+{
+    std::size_t total = loaded_.size();
+    if (total <= node_budget_)
+        return;
+    std::size_t excess = total - node_budget_;
+    while (excess > 0)
+    {
+        auto it = --loaded_.end();
+        load_map_.erase(it->get());
+        (*it)->unload(true);
+        loaded_.erase(it);
+        excess--;
+    }
 }
 
 }  // namespace fkie_potree_rviz_plugin

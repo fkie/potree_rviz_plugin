@@ -1,0 +1,26 @@
+vertex_program potree_splat_vertices glsl
+{
+    source potree_splat.vs
+    default_params
+    {
+        param_named_auto worldview_matrix worldview_matrix
+        param_named_auto projection_matrix projection_matrix
+        param_named_auto fov fov
+        param_named_auto viewport_height viewport_height
+        param_named splat_size float 2.0
+        param_named is_ortho_projection int 0
+        param_named spacing float 0.0
+        param_named min_point_size float 2.0
+        param_named max_point_size float 50.0
+    }
+}
+
+fragment_program potree_splat_fragment glsl
+{
+    source potree_splat.fs
+    default_params
+    {
+        param_named_auto projection_matrix projection_matrix
+    }
+
+}

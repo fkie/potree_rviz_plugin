@@ -1,4 +1,4 @@
-material rviz/potree_point
+material potree_point
 {
     technique
     {

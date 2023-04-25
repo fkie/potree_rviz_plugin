@@ -1,19 +1,16 @@
-material rviz/potree_splat
+material potree_splat
 {
     technique
     {
         pass
         {
-            vertex_program_ref rviz/potree_color.vert
+            point_size_attenuation on 1 0 0
+            point_sprites on
+            vertex_program_ref potree_splat_vertices
             {
             }
-            geometry_program_ref rviz/potree_quad.geom
+            fragment_program_ref potree_splat_fragment
             {
-                param_named_auto size custom 0
-            }
-            fragment_program_ref rviz/potree_circle.frag
-            {
-                param_named_auto shading custom 1
             }
         }
     }

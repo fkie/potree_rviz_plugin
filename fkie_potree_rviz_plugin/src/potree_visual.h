@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,9 @@
 #include <OgreVector3.h>
 #include <ros/time.h>
 
+#include <list>
 #include <memory>
+#include <unordered_map>
 
 namespace Ogre
 {
@@ -54,7 +56,7 @@ public:
     void setPointBudget(std::size_t budget);
     void setPointSize(float size);
     void setMinimumNodeSize(float size);
-    void enableHQRendering(bool enable, bool use_shading);
+    void enableSplatRendering(bool enable);
 
 protected:
     virtual void
@@ -63,24 +65,31 @@ protected:
                           Ogre::Viewport* viewport) override;
 
 private:
-    void onNodeLoaded();
+    void onNodeLoaded(const std::shared_ptr<PotreeNode>&);
     float priority(const std::shared_ptr<PotreeNode>& node,
                    const Ogre::Matrix4& world, Ogre::Viewport* viewport) const;
+    void updateLRU(const std::shared_ptr<PotreeNode>& node);
+    void unloadUnused();
     Ogre::SceneManager* scene_manager_;
     Ogre::SceneNode* scene_node_;
     Ogre::Vector3 last_cam_pos_;
     Ogre::Matrix4 last_proj_matrix_;
     Ogre::Quaternion last_cam_ori_;
+    std::size_t node_budget_ = 10000;
     std::size_t point_budget_ = 0;
-    float minimum_node_size_ = 30.f;
+    float minimum_node_size_ = 10.f;
     float point_size_ = 1.f;
     bool appearance_changed_ = false;
     bool force_update_ = false;
-    bool hq_render_ = false;
+    bool splat_rendering_ = false;
     bool use_shading_ = true;
     std::shared_ptr<CloudLoader> loader_;
     std::shared_ptr<PotreeNode> root_node_;
     std::shared_ptr<LoadingThread> loading_thread_;
+    using LoadList = std::list<std::shared_ptr<PotreeNode>>;
+    LoadList loaded_;
+    std::unordered_map<PotreeNode*, LoadList::iterator> load_map_;
+
 };
 
 }  // namespace fkie_potree_rviz_plugin

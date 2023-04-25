@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,8 @@ namespace fkie_potree_rviz_plugin
 {
 
 class CloudMetaData;
-class CloudLoader;
+class CloudLoader1;
+class CloudLoader2;
 
 class PotreeNode
 {
@@ -86,24 +87,25 @@ public:
         return attached_scene_ != nullptr;
     }
     bool isVisible() const;
+    float spacing() const;
     std::size_t pointCount() const
     {
         std::lock_guard<std::mutex> lock{mutex_};
         return point_count_;
     }
-    void enableHQRendering(bool enable, bool use_shading,
-                           bool recursive = false);
+    void enableSplatRendering(bool enable, bool recursive = false);
     void unload(bool recursive = false);
     void setVisible(bool visible, bool recursive = false);
     void createVertexBuffer();
     void setPointSize(float size, bool recursive = false);
-    void updateShaderParameters(float size_per_pixel, bool is_ortho_projection,
-                                float z_scale);
+    void updateShaderParameters(bool is_ortho_projection, float spacing);
     void attachToScene(Ogre::SceneNode* scene, bool recursive = false);
     void detachFromScene(bool recursive = false);
 
 private:
-    friend class CloudLoader;
+    friend class CloudLoader1;
+    friend class CloudLoader2;
+
     std::string getMaterial();
 
     mutable std::mutex mutex_;
@@ -111,13 +113,15 @@ private:
     std::shared_ptr<CloudMetaData> meta_data_;
     Ogre::AxisAlignedBox bounding_box_;
     std::weak_ptr<PotreeNode> parent_;
-    bool loaded_, hq_render_, use_shading_;
-    float point_size_;
+    std::size_t point_count_ = 0;
+    bool loaded_ = false, splat_rendering_ = false;
+    float point_size_ = 1.f;
     std::array<std::shared_ptr<PotreeNode>, 8> children_;
     std::shared_ptr<Ogre::ManualObject> vertex_data_;
-    std::size_t point_count_;
-    Ogre::SceneNode* attached_scene_;
+    Ogre::SceneNode* attached_scene_ = nullptr;
     std::string unique_id_;
+    std::size_t hierarchy_offset_ = 0, hierarchy_size_ = 0;
+    std::size_t data_offset_ = 0, data_size_ = 0;
     std::vector<Ogre::Vector3> points_;
     std::vector<Ogre::ColourValue> colors_;
 };

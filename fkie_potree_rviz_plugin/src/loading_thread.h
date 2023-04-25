@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,15 +35,16 @@ class CloudLoader;
 class LoadingThread
 {
 public:
+    using NodeCallback = std::function<void(const std::shared_ptr<PotreeNode>&)>;
     explicit LoadingThread(const std::shared_ptr<CloudLoader>& loader);
     ~LoadingThread();
     void unscheduleAll();
     void scheduleForLoading(const std::shared_ptr<PotreeNode>& node);
-    void setNodeLoadedCallback(const std::function<void()>& func);
+    void setNodeLoadedCallback(const NodeCallback& func);
 
 private:
     void run();
-    std::function<void()> func_;
+    NodeCallback load_func_;
     bool running_;
     std::mutex mutex_;
     std::condition_variable cond_;

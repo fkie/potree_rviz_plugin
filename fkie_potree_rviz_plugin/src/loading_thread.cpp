@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,10 +48,10 @@ void LoadingThread::unscheduleAll()
         need_to_load_.pop();
 }
 
-void LoadingThread::setNodeLoadedCallback(const std::function<void()>& func)
+void LoadingThread::setNodeLoadedCallback(const NodeCallback& func)
 {
     // This function gets called whenever a new node has been loaded
-    func_ = func;
+    load_func_ = func;
 }
 
 void LoadingThread::scheduleForLoading(const std::shared_ptr<PotreeNode>& node)
@@ -78,8 +78,8 @@ void LoadingThread::run()
             continue;
         lock.unlock();
         loader_->loadPoints(node);
-        if (func_)
-            func_();
+        if (load_func_)
+            load_func_(node);
         lock.lock();
     }
 }

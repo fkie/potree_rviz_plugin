@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * fkie_potree_rviz_plugin
- * Copyright © 2018 Fraunhofer FKIE
+ * Copyright © 2018-2023 Fraunhofer FKIE
  * Author: Timo Röhling
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,14 +62,10 @@ PotreeDisplay::PotreeDisplay() : rviz::Display()
         SLOT(updateRenderOptions()));
     point_size_property_->setMin(1);
     point_size_property_->setMax(50.0);
-    hq_render_property_ = new rviz::BoolProperty(
-        "HQ Rendering", false, "Use HQ splats for better visual quality.", this,
+    splat_render_property_ = new rviz::BoolProperty(
+        "Splat Rendering", false, "Use splats for better visual quality.", this,
         SLOT(updateRenderOptions()));
-    hq_render_property_->setDisableChildrenIfFalse(true);
-    shading_property_ = new rviz::BoolProperty(
-        "Shaded Outlines", false,
-        "Render HQ splats with shaded outlines for more distinctive edges",
-        hq_render_property_, SLOT(updateRenderOptions()), this);
+    splat_render_property_->setDisableChildrenIfFalse(true);
 }
 
 void PotreeDisplay::onInitialize()
@@ -136,8 +132,7 @@ void PotreeDisplay::updateRenderOptions()
     {
         visual_->setPointBudget(point_budget_property_->getInt());
         visual_->setPointSize(point_size_property_->getFloat());
-        visual_->enableHQRendering(hq_render_property_->getBool(),
-                                   shading_property_->getBool());
+        visual_->enableSplatRendering(splat_render_property_->getBool());
     }
 }
 
@@ -148,16 +143,9 @@ void PotreeDisplay::updateCloud()
         return;
     std::string error_msg;
     fs::path path = path_property_->getStdString();
-    if (!CloudLoader::isValid(path, error_msg))
-    {
-        setStatus(rviz::StatusProperty::Error, "Cloud",
-                  QString::fromStdString(error_msg));
-        return;
-    }
     try
     {
-        std::shared_ptr<CloudLoader> loader =
-            std::make_shared<CloudLoader>(path);
+        std::shared_ptr<CloudLoader> loader = CloudLoader::create(path);
         visual_ = std::make_shared<PotreeVisual>(
             loader, context_->getSceneManager(), scene_node_);
         setStatus(rviz::StatusProperty::Ok, "Cloud",
@@ -173,5 +161,5 @@ void PotreeDisplay::updateCloud()
 
 }  // namespace fkie_potree_rviz_plugin
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(fkie_potree_rviz_plugin::PotreeDisplay, rviz::Display);
