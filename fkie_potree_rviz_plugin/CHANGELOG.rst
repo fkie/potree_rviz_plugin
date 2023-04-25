@@ -2,8 +2,8 @@
 Changelog for package fkie_potree_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2023-04-25)
+------------------
 * Add support for Potree 1.8 and 2.0 formats
 * Add automatic unloading of unused nodes to limit memory usage
 * Fix compatibility with Ubuntu 20.04
