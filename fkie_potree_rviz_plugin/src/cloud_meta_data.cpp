@@ -38,6 +38,65 @@
 namespace fkie_potree_rviz_plugin
 {
 
+namespace
+{
+
+CloudMetaData::PointAttribute pointAttributeFromString(const std::string& attr)
+{
+    if (attr == "POSITION_CARTESIAN")
+        return {attr, 12, 3, 4, CloudMetaData::PointAttribute::Int};
+    if (attr == "COLOR_PACKED" || attr == "RGBA_PACKED")
+        return {"COLOR_PACKED", 4, 4, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "RGB_PACKED")
+        return {attr, 3, 3, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "INTENSITY")
+        return {attr, 2, 1, 2, CloudMetaData::PointAttribute::UInt};
+    if (attr == "CLASSIFICATION")
+        return {attr, 1, 1, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "RETURN_NUMBER" || attr == "NUMBER_OF_RETURNS")
+        return {attr, 1, 1, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "SOURCE_ID")
+        return {attr, 2, 1, 2, CloudMetaData::PointAttribute::UInt};
+    if (attr == "GPS_TIME")
+        return {attr, 8, 1, 8, CloudMetaData::PointAttribute::Float};
+    if (attr == "NORMAL_SPHEREMAPPED")
+        return {attr, 2, 2, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "NORMAL_OCT16")
+        return {attr, 2, 2, 1, CloudMetaData::PointAttribute::UInt};
+    if (attr == "NORMAL" || attr == "NORMAL_FLOATS")
+        return {attr, 12, 3, 4, CloudMetaData::PointAttribute::Float};
+    if (attr == "SPACING")
+        return {attr, 4, 1, 4, CloudMetaData::PointAttribute::Float};
+    if (attr == "INDICES")
+        return {attr, 4, 1, 4, CloudMetaData::PointAttribute::UInt};
+    throw std::runtime_error("unsupported point attribute " + attr);
+}
+
+CloudMetaData::PointAttribute parsePointAttribute(const Json::Value& attr)
+{
+    std::string name, type_str;
+    std::size_t size, num_elems, elem_size;
+    JSON_GET(String, name, attr, "name");
+    JSON_GET(String, type_str, attr, "type");
+    JSON_GET(UInt, size, attr, "size");
+    if (!attr["numElements"].isNull())
+        JSON_GET(UInt, num_elems, attr, "numElements");
+    else
+        JSON_GET(UInt, num_elems, attr, "elements");
+    JSON_GET(UInt, elem_size, attr, "elementSize");
+    CloudMetaData::PointAttribute::Type type =
+        CloudMetaData::PointAttribute::None;
+    if (type_str.substr(0, 3) == "int")
+        type = CloudMetaData::PointAttribute::Int;
+    if (type_str.substr(0, 4) == "uint")
+        type = CloudMetaData::PointAttribute::UInt;
+    if (type_str.substr(0, 5) == "float")
+        type = CloudMetaData::PointAttribute::Float;
+    return {name, size, num_elems, elem_size, type};
+}
+
+}  // namespace
+
 CloudMetaData::CloudMetaData(const fs::path& file_name)
 {
     std::ifstream f(file_name.c_str());
@@ -87,19 +146,28 @@ void CloudMetaData::parsePotree1(Json::Value& data)
     JSON_GET(Float, uy, bb, "uy");
     JSON_GET(Float, uz, bb, "uz");
     bounding_box_.setExtents(lx, ly, lz, ux, uy, uz);
-    Json::Value attr = data["pointAttributes"];
-    if (attr.isNull())
+    Json::Value attrs = data["pointAttributes"];
+    if (attrs.isNull())
         throw std::runtime_error("missing point attributes");
     point_attributes_.clear();
     point_byte_size_ = 0;
-    for (Json::ArrayIndex i = 0; i < attr.size(); ++i)
+    for (Json::ArrayIndex i = 0; i < attrs.size(); ++i)
     {
-        std::string val;
-        JSON_GET_EX(String, val, attr, i,
-                    "invalid point attribute array entry");
-        PointAttribute point_attr = potree1Attr(val);
-        point_attributes_.push_back(point_attr);
-        point_byte_size_ += point_attr.size;
+        if (attrs[i].isString())
+        {
+            std::string val;
+            JSON_GET_EX(String, val, attrs, i,
+                        "invalid point attribute array entry");
+            PointAttribute point_attr = pointAttributeFromString(val);
+            point_attributes_.push_back(point_attr);
+            point_byte_size_ += point_attr.size;
+        }
+        else
+        {
+            PointAttribute point_attr = parsePointAttribute(attrs[i]);
+            point_attributes_.push_back(point_attr);
+            point_byte_size_ += point_attr.size;
+        }
     }
 }
 
@@ -148,53 +216,10 @@ void CloudMetaData::parsePotree2(Json::Value& data)
     point_byte_size_ = 0;
     for (Json::ArrayIndex i = 0; i < attrs.size(); ++i)
     {
-        Json::Value attr = attrs[i];
-        std::string name, type_str;
-        std::size_t size, num_elems, elem_size;
-        JSON_GET(String, name, attr, "name");
-        JSON_GET(String, type_str, attr, "type");
-        JSON_GET(UInt, size, attr, "size");
-        JSON_GET(UInt, num_elems, attr, "numElements");
-        JSON_GET(UInt, elem_size, attr, "elementSize");
-        PointAttribute::Type type = PointAttribute::None;
-        if (type_str.substr(0, 3) == "int") type = PointAttribute::Int;
-        if (type_str.substr(0, 4) == "uint") type = PointAttribute::UInt;
-        if (type_str.substr(0, 5) == "float") type = PointAttribute::Float;
-        point_attributes_.push_back({name, size, num_elems, elem_size, type});
-        point_byte_size_ += size;
+        PointAttribute point_attr = parsePointAttribute(attrs[i]);
+        point_attributes_.push_back(point_attr);
+        point_byte_size_ += point_attr.size;
     }
-}
-
-CloudMetaData::PointAttribute
-CloudMetaData::potree1Attr(const std::string& attr)
-{
-    if (attr == "POSITION_CARTESIAN")
-        return {attr, 12, 3, 4, PointAttribute::Int};
-    if (attr == "COLOR_PACKED" || attr == "RGBA_PACKED")
-        return {"COLOR_PACKED", 4, 4, 1, PointAttribute::UInt};
-    if (attr == "RGB_PACKED")
-        return {attr, 3, 3, 1, PointAttribute::UInt};
-    if (attr == "INTENSITY")
-        return {attr, 2, 1, 2, PointAttribute::UInt};
-    if (attr == "CLASSIFICATION")
-        return {attr, 1, 1, 1, PointAttribute::UInt};
-    if (attr == "RETURN_NUMBER" || attr == "NUMBER_OF_RETURNS")
-        return {attr, 1, 1, 1, PointAttribute::UInt};
-    if (attr == "SOURCE_ID")
-        return {attr, 2, 1, 2, PointAttribute::UInt};
-    if (attr == "GPS_TIME")
-        return {attr, 8, 1, 8, PointAttribute::Float};
-    if (attr == "NORMAL_SPHEREMAPPED")
-        return {attr, 2, 2, 1, PointAttribute::UInt};
-    if (attr == "NORMAL_OCT16")
-        return {attr, 2, 2, 1, PointAttribute::UInt};
-    if (attr == "NORMAL" || attr == "NORMAL_FLOATS")
-        return {attr, 12, 3, 4, PointAttribute::Float};
-    if (attr == "SPACING")
-        return {attr, 4, 1, 4, PointAttribute::Float};
-    if (attr == "INDICES")
-        return {attr, 4, 1, 4, PointAttribute::UInt};
-    throw std::runtime_error("unsupported point attribute " + attr);
 }
 
 }  // namespace fkie_potree_rviz_plugin

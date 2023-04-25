@@ -162,7 +162,7 @@ void CloudLoader1::loadPoints(const std::shared_ptr<PotreeNode>& node,
                 points.push_back(Ogre::Vector3(x, y, z));
             }
         }
-        else if (attr.name == "COLOR_PACKED")
+        else if (attr.name == "COLOR_PACKED" || attr.name == "RGBA")
         {
             for (std::size_t i = 0; i < point_count; ++i)
             {
