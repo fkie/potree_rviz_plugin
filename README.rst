@@ -19,6 +19,9 @@ The `Potree Converter <https://github.com/potree/PotreeConverter>`_ will
 create an appropriate multi-resolution point cloud from LAS, LAZ, PLY,
 XYZ or PTX files.
 
+The plugin currently supports uncompressed RGB point clouds created
+with converter versions 1.6 up to 2.1.
+
 Acknowledgements
 ----------------
 
