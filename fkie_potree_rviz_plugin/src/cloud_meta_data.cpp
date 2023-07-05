@@ -173,6 +173,10 @@ void CloudMetaData::parsePotree1(Json::Value& data)
 
 void CloudMetaData::parsePotree2(Json::Value& data)
 {
+    std::string encoding;
+    JSON_GET(String, encoding, data, "encoding");
+    if (encoding != "DEFAULT")
+        throw std::runtime_error("unsupported " + encoding + " encoding");
     JSON_GET(UInt, point_count_, data, "points");
     JSON_GET(Float, spacing_, data, "spacing");
     Json::Value scale = data["scale"];
