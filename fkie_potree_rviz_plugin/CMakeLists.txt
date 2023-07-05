@@ -65,6 +65,8 @@ add_library(${PROJECT_NAME}
   src/cloud_loader_1.cpp
   src/cloud_loader_2.cpp
   src/cloud_meta_data.cpp
+  src/fs_path_editor.cpp
+  src/fs_path_property.cpp
   src/loading_thread.cpp
   src/potree_display.cpp
   src/potree_node.cpp

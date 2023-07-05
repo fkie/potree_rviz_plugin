@@ -33,9 +33,9 @@ namespace fkie_potree_rviz_plugin
 
 PotreeDisplay::PotreeDisplay() : rviz::Display()
 {
-    path_property_ = new rviz::StringProperty(
-        "Path", "", "Filesystem path to the point cloud", this,
-        SLOT(updateCloud()));
+    path_property_ =
+        new FsPathProperty("Path", "", "Filesystem path to the point cloud",
+                           this, SLOT(updateCloud()));
     frame_property_ = new rviz::TfFrameProperty(
         "Reference Frame", rviz::TfFrameProperty::FIXED_FRAME_STRING,
         "The TF frame this point cloud will use for its origin.", this, 0, true,
@@ -142,7 +142,7 @@ void PotreeDisplay::updateCloud()
     if (!isEnabled())
         return;
     std::string error_msg;
-    fs::path path = path_property_->getStdString();
+    fs::path path = path_property_->getFsPath();
     try
     {
         std::shared_ptr<CloudLoader> loader = CloudLoader::create(path);

@@ -21,6 +21,8 @@
 #define SRC_POTREE_DISPLAY_H_
 
 #ifndef Q_MOC_RUN
+#    include "fs_path_property.h"
+
 #    include <rviz/display.h>
 #    include <rviz/properties/bool_property.h>
 #    include <rviz/properties/float_property.h>
@@ -55,13 +57,13 @@ private Q_SLOTS:
     void updateCloud();
 
 private:
-    rviz::StringProperty* path_property_;
+    FsPathProperty* path_property_;
     rviz::TfFrameProperty* frame_property_;
     rviz::VectorProperty* origin_offset_property_;
     rviz::QuaternionProperty* origin_rotation_property_;
     rviz::IntProperty* point_budget_property_;
     rviz::FloatProperty* point_size_property_;
-    rviz::BoolProperty *splat_render_property_, *shading_property_;
+    rviz::BoolProperty* splat_render_property_;
     std::shared_ptr<PotreeVisual> visual_;
 };
 
