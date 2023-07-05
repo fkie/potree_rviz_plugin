@@ -85,7 +85,6 @@ public:
 private:
     void parsePotree1(Json::Value& data);
     void parsePotree2(Json::Value& data);
-    static PointAttribute potree1Attr(const std::string& attr);
 
     friend class CloudLoader1;
     friend class CloudLoader2;
