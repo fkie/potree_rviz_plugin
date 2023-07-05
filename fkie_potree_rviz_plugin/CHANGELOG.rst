@@ -2,6 +2,14 @@
 Changelog for package fkie_potree_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Improve Potree folder selection
+  Use a specialized path property Instead of a generic text property,
+  so we can also have a file dialog to pick a folder.
+* Explicitly reject unsupported tree encodings
+* Contributors: Timo Röhling
+
 2.0.0 (2023-04-25)
 ------------------
 * Add support for Potree 1.8 and 2.0 formats
