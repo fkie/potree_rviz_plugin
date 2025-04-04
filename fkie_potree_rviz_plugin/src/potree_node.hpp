@@ -20,9 +20,7 @@
 #ifndef SRC_POTREE_NODE_H_
 #define SRC_POTREE_NODE_H_
 
-#include <OgreAxisAlignedBox.h>
-#include <OgreColourValue.h>
-#include <OgreVector3.h>
+#include <Ogre.h>
 
 #include <array>
 #include <memory>
@@ -44,11 +42,9 @@ class CloudLoader2;
 class PotreeNode
 {
 public:
-    PotreeNode(
-        const std::string& name,
-        const std::shared_ptr<CloudMetaData>& meta_data,
-        const Ogre::AxisAlignedBox& bounding_box,
-        const std::weak_ptr<PotreeNode>& parent = std::weak_ptr<PotreeNode>());
+    PotreeNode(const std::string& name, const std::shared_ptr<CloudMetaData>& meta_data,
+               const Ogre::AxisAlignedBox& bounding_box,
+               const std::weak_ptr<PotreeNode>& parent = std::weak_ptr<PotreeNode>());
     ~PotreeNode();
 
     const std::string& name() const
@@ -57,7 +53,7 @@ public:
     }
     std::size_t level() const
     {
-        return name_.length();
+        return level_;
     }
     const Ogre::AxisAlignedBox& boundingBox() const
     {
@@ -106,10 +102,13 @@ private:
     friend class CloudLoader1;
     friend class CloudLoader2;
 
+    static const std::string MATERIAL_GROUP;
+
     std::string getMaterial();
 
     mutable std::mutex mutex_;
     std::string name_;
+    std::size_t level_;
     std::shared_ptr<CloudMetaData> meta_data_;
     Ogre::AxisAlignedBox bounding_box_;
     std::weak_ptr<PotreeNode> parent_;

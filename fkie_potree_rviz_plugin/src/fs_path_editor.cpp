@@ -17,9 +17,9 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#include "fs_path_editor.h"
+#include "fs_path_editor.hpp"
 
-#include "fs_path_property.h"
+#include "fs_path_property.hpp"
 
 #include <QFileDialog>
 
@@ -27,7 +27,7 @@ namespace fkie_potree_rviz_plugin
 {
 
 FsPathEditor::FsPathEditor(FsPathProperty* property, QWidget* parent)
-    : rviz::LineEditWithButton(parent), property_(property)
+    : rviz_common::properties::LineEditWithButton(parent), property_(property)
 {
 }
 
@@ -38,8 +38,7 @@ void FsPathEditor::onButtonClick()
 
     deleteLater();
 
-    QString new_path =
-        QFileDialog::getExistingDirectory(window(), QString(), path);
+    QString new_path = QFileDialog::getExistingDirectory(window(), QString(), path);
     if (!new_path.isNull())
         prop->setString(new_path);
 }

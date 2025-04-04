@@ -45,13 +45,11 @@ void main() {
 		worldview_matrix * vec4(1, 0, 0, 1)
 	);
     float projection_factor =
-        is_ortho_projection == 0
-            ? -0.5 * viewport_height / (tan(fov / 2.0) * position.z)
-            : viewport_height * projection_matrix[1][1];
+       is_ortho_projection == 0
+           ? -0.5 * viewport_height / (tan(fov / 2.0) * position.z)
+           : viewport_height * projection_matrix[1][1];
     projection_factor *= scale;
-    float point_size = splat_size * spacing;
-    if (is_ortho_projection == 0)
-        point_size *= projection_factor;
+    float point_size = 2.0 * splat_size * spacing;
     point_size = max(min_point_size, point_size);
     point_size = min(max_point_size, point_size);
 	gl_PointSize = point_size;

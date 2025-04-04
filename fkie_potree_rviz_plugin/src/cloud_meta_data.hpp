@@ -21,8 +21,8 @@
 #define SRC_CLOUD_META_DATA_H_
 
 #include <OgreAxisAlignedBox.h>
-#include <boost/filesystem/path.hpp>
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -39,7 +39,7 @@ namespace fkie_potree_rviz_plugin
 class CloudLoader1;
 class CloudLoader2;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 class CloudMetaData
 {

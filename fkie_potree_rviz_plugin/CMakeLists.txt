@@ -17,95 +17,65 @@
 # limitations under the License.
 #
 ############################################################################
-#
-cmake_minimum_required(VERSION 3.1)
-project(fkie_potree_rviz_plugin)
 
-###############################################
-# Find catkin macros, packages, and libraries #
-###############################################
+cmake_minimum_required(VERSION 3.13...3.28)
+project(fkie_potree_rviz_plugin VERSION 3.0.0)
 
-find_package(catkin REQUIRED COMPONENTS
-  rviz
-)
+include(GenerateExportHeader)
 
-#######################
-# System dependencies #
-#######################
-
-find_package(Boost REQUIRED COMPONENTS filesystem)
+# Dependencies
+find_package(ament_cmake REQUIRED)
 find_package(jsoncpp REQUIRED)
-find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED COMPONENTS Core Widgets)
-set(QT_LIBRARIES Qt5::Widgets)
-set(CMAKE_AUTOMOC ON)
+find_package(rclcpp REQUIRED)
+find_package(rviz_common REQUIRED)
+find_package(rviz_rendering REQUIRED)
 
 
-############################
-# Configure catkin package #
-############################
-
-catkin_package(
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    rviz
+# Targets
+add_library(${PROJECT_NAME} MODULE
+    src/cloud_loader.cpp
+    src/cloud_loader_1.cpp
+    src/cloud_loader_2.cpp
+    src/cloud_meta_data.cpp
+    src/fs_path_editor.cpp
+    src/fs_path_property.cpp
+    src/loading_thread.cpp
+    src/potree_display.cpp
+    src/potree_node.cpp
+    src/potree_visual.cpp
 )
-
-#########
-# Build #
-#########
-
-add_definitions(-DQT_NO_KEYWORDS)
-include_directories(SYSTEM
-  ${catkin_INCLUDE_DIRS}
-  ${QT_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-)
-add_library(${PROJECT_NAME}
-  src/cloud_loader.cpp
-  src/cloud_loader_1.cpp
-  src/cloud_loader_2.cpp
-  src/cloud_meta_data.cpp
-  src/fs_path_editor.cpp
-  src/fs_path_property.cpp
-  src/loading_thread.cpp
-  src/potree_display.cpp
-  src/potree_node.cpp
-  src/potree_visual.cpp
-)
-add_dependencies(${PROJECT_NAME}
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+generate_export_header(${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 set_target_properties(${PROJECT_NAME} PROPERTIES
-  CXX_VISIBILITY_PRESET "hidden"
-  VISIBILITY_INLINES_HIDDEN ON
+    CXX_VISIBILITY_PRESET "hidden"
+    VISIBILITY_INLINES_HIDDEN ON
+    AUTOMOC ON
 )
-target_link_libraries(${PROJECT_NAME}
-  jsoncpp_lib
-  ${Boost_LIBRARIES}
-  ${QT_LIBRARIES}
-  ${catkin_LIBRARIES}
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    jsoncpp_lib
+    pluginlib::pluginlib
+    rviz_common::rviz_common
+    rviz_rendering::rviz_rendering
+    rclcpp::rclcpp
 )
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
-###########
-# Install #
-###########
 
+
+# Installation
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(FILES plugin.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
 
 install(DIRECTORY icons
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    DESTINATION share/${PROJECT_NAME}
 )
 
-install(DIRECTORY ogre_media
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# Ament package handling
+register_rviz_ogre_media_exports(
+    DIRECTORIES "materials"
 )
-
+pluginlib_export_plugin_description_file(rviz_common plugin.xml)
+ament_package()

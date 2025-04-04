@@ -17,17 +17,16 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#include "loading_thread.h"
+#include "loading_thread.hpp"
 
-#include "cloud_loader.h"
-#include "potree_node.h"
+#include "cloud_loader.hpp"
+#include "potree_node.hpp"
 
 namespace fkie_potree_rviz_plugin
 {
 
 LoadingThread::LoadingThread(const std::shared_ptr<CloudLoader>& loader)
-    : running_(true), loader_(loader),
-      thread_(std::bind(&LoadingThread::run, this))
+    : running_(true), loader_(loader), thread_(std::bind(&LoadingThread::run, this))
 {
 }
 

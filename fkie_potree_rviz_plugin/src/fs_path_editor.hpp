@@ -20,14 +20,14 @@
 #ifndef SRC_FS_PATH_EDITOR_H_
 #define SRC_FS_PATH_EDITOR_H_
 
-#include <rviz/properties/line_edit_with_button.h>
+#include <rviz_common/properties/line_edit_with_button.hpp>
 
 namespace fkie_potree_rviz_plugin
 {
 
 class FsPathProperty;
 
-class FsPathEditor : public rviz::LineEditWithButton
+class FsPathEditor : public rviz_common::properties::LineEditWithButton
 {
     Q_OBJECT
 public:

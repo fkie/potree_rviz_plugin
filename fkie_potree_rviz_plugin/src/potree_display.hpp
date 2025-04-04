@@ -21,15 +21,16 @@
 #define SRC_POTREE_DISPLAY_H_
 
 #ifndef Q_MOC_RUN
-#    include "fs_path_property.h"
+#    include "fs_path_property.hpp"
 
-#    include <rviz/display.h>
-#    include <rviz/properties/bool_property.h>
-#    include <rviz/properties/float_property.h>
-#    include <rviz/properties/int_property.h>
-#    include <rviz/properties/quaternion_property.h>
-#    include <rviz/properties/tf_frame_property.h>
-#    include <rviz/properties/vector_property.h>
+#    include <fkie_potree_rviz_plugin_export.h>
+#    include <rviz_common/display.hpp>
+#    include <rviz_common/properties/bool_property.hpp>
+#    include <rviz_common/properties/float_property.hpp>
+#    include <rviz_common/properties/int_property.hpp>
+#    include <rviz_common/properties/quaternion_property.hpp>
+#    include <rviz_common/properties/tf_frame_property.hpp>
+#    include <rviz_common/properties/vector_property.hpp>
 
 #    include <memory>
 #endif
@@ -39,7 +40,7 @@ namespace fkie_potree_rviz_plugin
 
 class PotreeVisual;
 
-class PotreeDisplay : public rviz::Display
+class FKIE_POTREE_RVIZ_PLUGIN_EXPORT PotreeDisplay : public rviz_common::Display
 {
     Q_OBJECT
 public:
@@ -58,12 +59,12 @@ private Q_SLOTS:
 
 private:
     FsPathProperty* path_property_;
-    rviz::TfFrameProperty* frame_property_;
-    rviz::VectorProperty* origin_offset_property_;
-    rviz::QuaternionProperty* origin_rotation_property_;
-    rviz::IntProperty* point_budget_property_;
-    rviz::FloatProperty* point_size_property_;
-    rviz::BoolProperty* splat_render_property_;
+    rviz_common::properties::TfFrameProperty* frame_property_;
+    rviz_common::properties::VectorProperty* origin_offset_property_;
+    rviz_common::properties::QuaternionProperty* origin_rotation_property_;
+    rviz_common::properties::IntProperty* point_budget_property_;
+    rviz_common::properties::FloatProperty* point_size_property_;
+    rviz_common::properties::BoolProperty* splat_render_property_;
     std::shared_ptr<PotreeVisual> visual_;
 };
 

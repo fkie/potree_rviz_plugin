@@ -20,12 +20,7 @@
 #ifndef SRC_POTREE_VISUAL_H_
 #define SRC_POTREE_VISUAL_H_
 
-#include "priority_queue.h"
-
-#include <OgreQuaternion.h>
-#include <OgreSceneManager.h>
-#include <OgreVector3.h>
-#include <ros/time.h>
+#include <Ogre.h>
 
 #include <list>
 #include <memory>
@@ -47,8 +42,7 @@ class LoadingThread;
 class PotreeVisual : protected Ogre::SceneManager::Listener
 {
 public:
-    PotreeVisual(const std::shared_ptr<CloudLoader>& loader,
-                 Ogre::SceneManager* scene_manager,
+    PotreeVisual(const std::shared_ptr<CloudLoader>& loader, Ogre::SceneManager* scene_manager,
                  Ogre::SceneNode* parent_node);
     ~PotreeVisual();
     void setVisible(bool visible);
@@ -59,15 +53,12 @@ public:
     void enableSplatRendering(bool enable);
 
 protected:
-    virtual void
-    preFindVisibleObjects(Ogre::SceneManager* source,
-                          Ogre::SceneManager::IlluminationRenderStage irs,
-                          Ogre::Viewport* viewport) override;
+    virtual void preFindVisibleObjects(Ogre::SceneManager* source, Ogre::SceneManager::IlluminationRenderStage irs,
+                                       Ogre::Viewport* viewport) override;
 
 private:
     void onNodeLoaded(const std::shared_ptr<PotreeNode>&);
-    float priority(const std::shared_ptr<PotreeNode>& node,
-                   const Ogre::Matrix4& world, Ogre::Viewport* viewport) const;
+    float priority(const std::shared_ptr<PotreeNode>& node, const Ogre::Matrix4& world, Ogre::Viewport* viewport) const;
     void updateLRU(const std::shared_ptr<PotreeNode>& node);
     void unloadUnused();
     Ogre::SceneManager* scene_manager_;
@@ -89,7 +80,6 @@ private:
     using LoadList = std::list<std::shared_ptr<PotreeNode>>;
     LoadList loaded_;
     std::unordered_map<PotreeNode*, LoadList::iterator> load_map_;
-
 };
 
 }  // namespace fkie_potree_rviz_plugin

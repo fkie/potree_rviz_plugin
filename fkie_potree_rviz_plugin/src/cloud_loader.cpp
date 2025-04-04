@@ -18,12 +18,10 @@
  *
  ****************************************************************************/
 
-#include "cloud_loader.h"
+#include "cloud_loader.hpp"
 
-#include "cloud_loader_1.h"
-#include "cloud_loader_2.h"
-
-#include <boost/filesystem.hpp>
+#include "cloud_loader_1.hpp"
+#include "cloud_loader_2.hpp"
 
 #include <stdexcept>
 
@@ -36,11 +34,11 @@ std::shared_ptr<CloudLoader> CloudLoader::create(const fs::path& path)
         throw std::runtime_error("not an existing folder");
 
     std::shared_ptr<CloudMetaData> meta_data;
-    if (fs::is_regular(path / "cloud.js"))
+    if (fs::is_regular_file(path / "cloud.js"))
     {
         meta_data = std::make_shared<CloudMetaData>(path / "cloud.js");
     }
-    else if (fs::is_regular(path / "metadata.json"))
+    else if (fs::is_regular_file(path / "metadata.json"))
     {
         meta_data = std::make_shared<CloudMetaData>(path / "metadata.json");
     }

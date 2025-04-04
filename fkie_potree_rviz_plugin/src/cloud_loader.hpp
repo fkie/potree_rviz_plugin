@@ -17,30 +17,37 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#ifndef SRC_FS_PATH_PROPERTY_H_
-#define SRC_FS_PATH_PROPERTY_H_
+#ifndef SRC_CLOUD_LOADER_H_
+#define SRC_CLOUD_LOADER_H_
 
-#include <boost/filesystem/path.hpp>
-#include <rviz/properties/string_property.h>
+#include "cloud_meta_data.hpp"
+
+#include <OgreAxisAlignedBox.h>
+
+#include <memory>
+#include <filesystem>
 
 namespace fkie_potree_rviz_plugin
 {
 
-/** @brief Property specialized for filesystem path values. */
-class FsPathProperty : public rviz::StringProperty
+namespace fs = std::filesystem;
+
+class PotreeNode;
+
+class CloudLoader
 {
 public:
-    FsPathProperty(const QString& name = QString(),
-                   const QString& default_value = QString(),
-                   const QString& description = QString(),
-                   Property* parent = nullptr,
-                   const char* changed_slot = nullptr,
-                   QObject* receiver = nullptr);
-    boost::filesystem::path getFsPath() const;
-    virtual QWidget* createEditor(QWidget* parent,
-                                  const QStyleOptionViewItem&) override;
+    virtual std::shared_ptr<const CloudMetaData> metaData() const = 0;
+    virtual std::shared_ptr<PotreeNode> loadHierarchy() const = 0;
+    virtual std::size_t estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const = 0;
+    virtual void loadPoints(const std::shared_ptr<PotreeNode>& node, bool recursive = false) const = 0;
+
+    static std::shared_ptr<CloudLoader> create(const fs::path& path);
+
+protected:
+    static Ogre::AxisAlignedBox childBB(const Ogre::AxisAlignedBox& parent, int index);
 };
 
 }  // namespace fkie_potree_rviz_plugin
 
-#endif
+#endif /* SRC_CLOUD_LOADER_H_ */

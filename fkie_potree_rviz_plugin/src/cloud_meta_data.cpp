@@ -18,7 +18,7 @@
  *
  ****************************************************************************/
 
-#include "cloud_meta_data.h"
+#include "cloud_meta_data.hpp"
 
 #include <json/reader.h>
 
@@ -32,8 +32,7 @@
         Var = Data[Key].as##Type();              \
     } while (0)
 
-#define JSON_GET(Type, Var, Data, Key) \
-    JSON_GET_EX(Type, Var, Data, Key, "missing " #Type " key: " Key)
+#define JSON_GET(Type, Var, Data, Key) JSON_GET_EX(Type, Var, Data, Key, "missing " #Type " key: " Key)
 
 namespace fkie_potree_rviz_plugin
 {
@@ -84,8 +83,7 @@ CloudMetaData::PointAttribute parsePointAttribute(const Json::Value& attr)
     else
         JSON_GET(UInt, num_elems, attr, "elements");
     JSON_GET(UInt, elem_size, attr, "elementSize");
-    CloudMetaData::PointAttribute::Type type =
-        CloudMetaData::PointAttribute::None;
+    CloudMetaData::PointAttribute::Type type = CloudMetaData::PointAttribute::None;
     if (type_str.substr(0, 3) == "int")
         type = CloudMetaData::PointAttribute::Int;
     if (type_str.substr(0, 4) == "uint")
@@ -101,14 +99,12 @@ CloudMetaData::CloudMetaData(const fs::path& file_name)
 {
     std::ifstream f(file_name.c_str());
     if (!f.good())
-        throw std::runtime_error(std::string("cannot open file: ")
-                                 + file_name.string());
+        throw std::runtime_error(std::string("cannot open file: ") + file_name.string());
     Json::Reader reader;
     Json::Value data;
     if (!reader.parse(f, data, false))
     {
-        throw std::runtime_error(std::string("cannot parse meta data: ")
-                                 + reader.getFormattedErrorMessages());
+        throw std::runtime_error(std::string("cannot parse meta data: ") + reader.getFormattedErrorMessages());
     }
     std::string version;
     JSON_GET(String, version, data, "version");
@@ -156,8 +152,7 @@ void CloudMetaData::parsePotree1(Json::Value& data)
         if (attrs[i].isString())
         {
             std::string val;
-            JSON_GET_EX(String, val, attrs, i,
-                        "invalid point attribute array entry");
+            JSON_GET_EX(String, val, attrs, i, "invalid point attribute array entry");
             PointAttribute point_attr = pointAttributeFromString(val);
             point_attributes_.push_back(point_attr);
             point_byte_size_ += point_attr.size;

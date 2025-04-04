@@ -18,29 +18,33 @@
  *
  ****************************************************************************/
 
-#include "potree_node.h"
+#include "potree_node.hpp"
 
-#include "cloud_meta_data.h"
+#include "cloud_meta_data.hpp"
 
 #include <OgreGpuProgramParams.h>
 #include <OgreManualObject.h>
 #include <OgreMaterial.h>
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
+#include <OgrePrerequisites.h>
 #include <OgreSceneNode.h>
 #include <OgreTechnique.h>
-#include <ros/console.h>
 
 namespace fkie_potree_rviz_plugin
 {
 
-PotreeNode::PotreeNode(const std::string& name,
-                       const std::shared_ptr<CloudMetaData>& meta_data,
-                       const Ogre::AxisAlignedBox& bounding_box,
-                       const std::weak_ptr<PotreeNode>& parent)
-    : name_(name), meta_data_(meta_data), bounding_box_(bounding_box),
-      parent_(parent)
+const std::string PotreeNode::MATERIAL_GROUP{"rviz_rendering"};
+
+PotreeNode::PotreeNode(const std::string& name, const std::shared_ptr<CloudMetaData>& meta_data,
+                       const Ogre::AxisAlignedBox& bounding_box, const std::weak_ptr<PotreeNode>& parent)
+    : name_(name), level_(1), meta_data_(meta_data), bounding_box_(bounding_box), parent_(parent)
 {
+    std::shared_ptr<PotreeNode> parent_node = parent_.lock();
+    if (parent_node)
+    {
+        level_ = parent_node->level() + 1;
+    }
 }
 
 PotreeNode::~PotreeNode()
@@ -55,7 +59,7 @@ void PotreeNode::createVertexBuffer()
         return;
     vertex_data_ = std::make_shared<Ogre::ManualObject>(unique_id_);
     vertex_data_->estimateVertexCount(point_count_);
-    vertex_data_->begin(getMaterial(), Ogre::RenderOperation::OT_POINT_LIST);
+    vertex_data_->begin(getMaterial(), Ogre::RenderOperation::OT_POINT_LIST, MATERIAL_GROUP);
     for (std::size_t i = 0; i < point_count_; ++i)
     {
         vertex_data_->position(points_[i]);
@@ -75,7 +79,7 @@ void PotreeNode::enableSplatRendering(bool enable, bool recursive)
         splat_rendering_ = enable;
         if (vertex_data_)
         {
-            vertex_data_->setMaterialName(0, getMaterial());
+            vertex_data_->setMaterialName(0, getMaterial(), MATERIAL_GROUP);
         }
     }
     if (recursive)
@@ -94,7 +98,7 @@ void PotreeNode::setPointSize(float point_size, bool recursive)
     point_size_ = point_size;
     if (vertex_data_)
     {
-        vertex_data_->setMaterialName(0, getMaterial());
+        vertex_data_->setMaterialName(0, getMaterial(), MATERIAL_GROUP);
     }
     if (recursive)
     {
@@ -108,32 +112,44 @@ void PotreeNode::setPointSize(float point_size, bool recursive)
 
 float PotreeNode::spacing() const
 {
-    return meta_data_->spacing() / (1 << name_.length());
+    return meta_data_->spacing() / level_;
 }
 
 void PotreeNode::updateShaderParameters(bool is_ortho_projection, float spacing)
 {
+#if __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     if (vertex_data_)
     {
-        if (vertex_data_->getNumSections() > 0)
+        std::size_t num_sections = vertex_data_->getNumSections();
+        for (std::size_t i = 0; i < num_sections; ++i)
         {
-            Ogre::Technique* technique =
-                vertex_data_->getSection(0)->getMaterial()->getTechnique(0);
-            for (std::size_t i = 0; i < technique->getNumPasses(); ++i)
+            Ogre::MaterialPtr material = vertex_data_->getSection(i)->getMaterial();
+            if (material)
             {
-                Ogre::Pass* pass = technique->getPass(i);
-                if (pass && pass->hasVertexProgram())
+                Ogre::Technique* technique = material->getTechnique(0);
+                if (technique)
                 {
-                    Ogre::GpuProgramParametersSharedPtr params =
-                        pass->getVertexProgramParameters();
-                    params->setNamedConstant("is_ortho_projection",
-                                             is_ortho_projection ? 1 : 0);
-                    params->setNamedConstant("spacing", spacing);
-                    params->setNamedConstant("splat_size", point_size_);
+                    for (std::size_t i = 0; i < technique->getNumPasses(); ++i)
+                    {
+                        Ogre::Pass* pass = technique->getPass(i);
+                        if (pass && pass->hasVertexProgram())
+                        {
+                            Ogre::GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
+                            params->setNamedConstant("is_ortho_projection", is_ortho_projection ? 1 : 0);
+                            params->setNamedConstant("spacing", spacing);
+                            params->setNamedConstant("splat_size", point_size_);
+                        }
+                    }
                 }
             }
         }
     }
+#if __GNUC__
+#    pragma GCC diagnostic pop
+#endif
 }
 
 void PotreeNode::attachToScene(Ogre::SceneNode* scene, bool recursive)
@@ -223,20 +239,15 @@ std::string PotreeNode::getMaterial()
 {
     if (splat_rendering_)
     {
-        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(
-            "potree_splat",
-            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        if (!m.isNull())
+        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName("potree_splat", MATERIAL_GROUP);
+        if (m)
             return "potree_splat";
     }
     std::string material = "potree_point" + std::to_string(point_size_);
-    Ogre::MaterialPtr m =
-        Ogre::MaterialManager::getSingleton().getByName(material);
-    if (m.isNull())
+    Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(material);
+    if (!m)
     {
-        Ogre::MaterialPtr m0 = Ogre::MaterialManager::getSingleton().getByName(
-            "potree_point",
-            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        Ogre::MaterialPtr m0 = Ogre::MaterialManager::getSingleton().getByName("potree_point", MATERIAL_GROUP);
         m = m0->clone(material);
         m->getTechnique(0)->getPass(0)->setPointSize(point_size_);
     }

@@ -17,29 +17,25 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#include "fs_path_property.h"
+#include "fs_path_property.hpp"
 
-#include "fs_path_editor.h"
+#include "fs_path_editor.hpp"
 
 namespace fkie_potree_rviz_plugin
 {
 
-FsPathProperty::FsPathProperty(const QString& name,
-                               const QString& default_value,
-                               const QString& description, Property* parent,
-                               const char* changed_slot, QObject* receiver)
-    : rviz::StringProperty(name, default_value, description, parent,
-                           changed_slot, receiver)
+FsPathProperty::FsPathProperty(const QString& name, const QString& default_value, const QString& description,
+                               Property* parent, const char* changed_slot, QObject* receiver)
+    : rviz_common::properties::StringProperty(name, default_value, description, parent, changed_slot, receiver)
 {
 }
 
-boost::filesystem::path FsPathProperty::getFsPath() const
+std::filesystem::path FsPathProperty::getFsPath() const
 {
-    return boost::filesystem::path(getValue().toString().toStdString());
+    return std::filesystem::path(getValue().toString().toStdString());
 }
 
-QWidget* FsPathProperty::createEditor(QWidget* parent,
-                                      const QStyleOptionViewItem&)
+QWidget* FsPathProperty::createEditor(QWidget* parent, const QStyleOptionViewItem&)
 {
     FsPathEditor* editor = new FsPathEditor(this, parent);
     editor->setFrame(false);

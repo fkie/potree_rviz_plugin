@@ -17,31 +17,31 @@
  * limitations under the License.
  *
  ****************************************************************************/
-#ifndef SRC_CLOUD_LOADER_2_H_
-#define SRC_CLOUD_LOADER_2_H_
+#ifndef SRC_CLOUD_LOADER_1_H_
+#define SRC_CLOUD_LOADER_1_H_
 
-#include "cloud_loader.h"
+#include "cloud_loader.hpp"
 
 namespace fkie_potree_rviz_plugin
 {
 
-class CloudLoader2 : public CloudLoader
+class CloudLoader1 : public CloudLoader
 {
 public:
-    explicit CloudLoader2(const std::shared_ptr<CloudMetaData>& meta_data);
+    explicit CloudLoader1(const std::shared_ptr<CloudMetaData>& meta_data);
     virtual std::shared_ptr<const CloudMetaData> metaData() const override;
     virtual std::shared_ptr<PotreeNode> loadHierarchy() const override;
-    virtual std::size_t
-    estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const override;
-    virtual void loadPoints(const std::shared_ptr<PotreeNode>& node,
-                            bool recursive = false) const override;
+    virtual std::size_t estimatedPointCount(const std::shared_ptr<PotreeNode>& node) const override;
+    virtual void loadPoints(const std::shared_ptr<PotreeNode>& node, bool recursive = false) const override;
 
 private:
     void loadNodeHierarchy(const std::shared_ptr<PotreeNode>& root_node) const;
+    static fs::path fileName(const std::shared_ptr<CloudMetaData>& meta_data, const std::string& name,
+                             const std::string& extension);
 
     std::shared_ptr<CloudMetaData> meta_data_;
 };
 
 }  // namespace fkie_potree_rviz_plugin
 
-#endif /* SRC_CLOUD_LOADER_2_H_ */
+#endif /* SRC_CLOUD_LOADER_1_H_ */
