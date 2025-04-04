@@ -2,6 +2,11 @@
 Changelog for package fkie_potree_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Migrate to ROS 2
+* Contributors: Timo Röhling
+
 2.0.1 (2023-07-05)
 ------------------
 * Improve Potree folder selection
