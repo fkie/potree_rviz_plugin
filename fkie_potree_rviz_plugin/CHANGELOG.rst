@@ -2,8 +2,8 @@
 Changelog for package fkie_potree_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2025-04-04)
+------------------
 * Migrate to ROS 2
 * Contributors: Timo Röhling
 
