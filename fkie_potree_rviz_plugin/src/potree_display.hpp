@@ -26,19 +26,27 @@
 #    include <fkie_potree_rviz_plugin_export.h>
 #    include <rviz_common/display.hpp>
 #    include <rviz_common/properties/bool_property.hpp>
+#    include <rviz_common/properties/enum_property.hpp>
 #    include <rviz_common/properties/float_property.hpp>
 #    include <rviz_common/properties/int_property.hpp>
 #    include <rviz_common/properties/quaternion_property.hpp>
+#    include <rviz_common/properties/ros_topic_property.hpp>
 #    include <rviz_common/properties/tf_frame_property.hpp>
 #    include <rviz_common/properties/vector_property.hpp>
 
+#    include <rclcpp/subscription.hpp>
+#    include <sensor_msgs/msg/point_cloud.hpp>
+
 #    include <memory>
 #endif
+
+#include <mutex>
 
 namespace fkie_potree_rviz_plugin
 {
 
 class PotreeVisual;
+class CloudLoader;
 
 class FKIE_POTREE_RVIZ_PLUGIN_EXPORT PotreeDisplay : public rviz_common::Display
 {
@@ -51,20 +59,46 @@ protected:
     virtual void onEnable() override;
     virtual void onDisable() override;
     virtual void fixedFrameChanged() override;
+    virtual void update(float wall_dt, float ros_dt) override;
 
 private Q_SLOTS:
     void updateOrigin();
     void updateRenderOptions();
     void updateCloud();
+    void updateSource();
+    void updateTopic();
+    void updateLodOptions();
 
 private:
+    enum SourceMode
+    {
+        SourceFile = 0,
+        SourceTopic = 1
+    };
+
+    void subscribe();
+    void unsubscribe();
+    void processPendingPointCloud();
+    void enqueuePointCloud(const sensor_msgs::msg::PointCloud::ConstSharedPtr& msg);
+    void setLoader(const std::shared_ptr<CloudLoader>& loader);
+
     FsPathProperty* path_property_;
+    rviz_common::properties::EnumProperty* source_property_;
+    rviz_common::properties::RosTopicProperty* topic_property_;
+    rviz_common::properties::IntProperty* lod_max_points_property_;
+    rviz_common::properties::IntProperty* lod_max_depth_property_;
     rviz_common::properties::TfFrameProperty* frame_property_;
     rviz_common::properties::VectorProperty* origin_offset_property_;
     rviz_common::properties::QuaternionProperty* origin_rotation_property_;
     rviz_common::properties::IntProperty* point_budget_property_;
     rviz_common::properties::FloatProperty* point_size_property_;
     rviz_common::properties::BoolProperty* splat_render_property_;
+
+    rclcpp::Subscription<sensor_msgs::msg::PointCloud>::SharedPtr subscription_;
+    std::mutex pending_mutex_;
+    sensor_msgs::msg::PointCloud::ConstSharedPtr pending_pointcloud_;
+    sensor_msgs::msg::PointCloud::ConstSharedPtr latest_pointcloud_;
+    bool pending_update_ = false;
     std::shared_ptr<PotreeVisual> visual_;
 };
 

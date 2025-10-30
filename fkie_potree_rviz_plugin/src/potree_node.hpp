@@ -38,6 +38,7 @@ namespace fkie_potree_rviz_plugin
 class CloudMetaData;
 class CloudLoader1;
 class CloudLoader2;
+class StreamingCloudLoader;
 
 class PotreeNode
 {
@@ -101,6 +102,7 @@ public:
 private:
     friend class CloudLoader1;
     friend class CloudLoader2;
+    friend class StreamingCloudLoader;
 
     static const std::string MATERIAL_GROUP;
 
