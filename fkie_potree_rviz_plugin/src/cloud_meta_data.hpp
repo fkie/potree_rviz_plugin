@@ -22,6 +22,7 @@
 
 #include <OgreAxisAlignedBox.h>
 
+#include <array>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -38,6 +39,7 @@ namespace fkie_potree_rviz_plugin
 
 class CloudLoader1;
 class CloudLoader2;
+class StreamingCloudLoader;
 
 namespace fs = std::filesystem;
 
@@ -64,6 +66,9 @@ public:
     };
 
     CloudMetaData(const fs::path& file_name);
+    CloudMetaData(const Ogre::AxisAlignedBox& bounding_box, float spacing,
+                  const std::vector<PointAttribute>& point_attributes, std::size_t point_byte_size,
+                  std::size_t point_count);
 
     std::size_t pointCount() const
     {
@@ -88,6 +93,7 @@ private:
 
     friend class CloudLoader1;
     friend class CloudLoader2;
+    friend class StreamingCloudLoader;
 
     fs::path octree_dir_;
     fs::path cloud_path_;

@@ -123,6 +123,25 @@ CloudMetaData::CloudMetaData(const fs::path& file_name)
     cloud_path_ = file_name.parent_path();
 }
 
+CloudMetaData::CloudMetaData(const Ogre::AxisAlignedBox& bounding_box, float spacing,
+                             const std::vector<PointAttribute>& point_attributes, std::size_t point_byte_size,
+                             std::size_t point_count)
+    : version_(POTREE_2_X),
+      point_count_(point_count),
+      hierarchy_step_size_(1),
+      point_byte_size_(point_byte_size),
+      hierarchy_root_size_(0),
+      hierarchy_node_size_(22),
+      bounding_box_(bounding_box),
+      spacing_(spacing),
+      point_attributes_(point_attributes)
+{
+    octree_dir_.clear();
+    cloud_path_.clear();
+    scale_ = {1.f, 1.f, 1.f};
+    offset_ = {0.f, 0.f, 0.f};
+}
+
 void CloudMetaData::parsePotree1(Json::Value& data)
 {
     JSON_GET(String, octree_dir_, data, "octreeDir");

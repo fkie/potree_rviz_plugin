@@ -28,6 +28,8 @@ include(GenerateExportHeader)
 find_package(ament_cmake REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(rviz_rendering REQUIRED)
 
@@ -37,6 +39,7 @@ add_library(${PROJECT_NAME} MODULE
     src/cloud_loader.cpp
     src/cloud_loader_1.cpp
     src/cloud_loader_2.cpp
+    src/cloud_loader_streaming.cpp
     src/cloud_meta_data.cpp
     src/fs_path_editor.cpp
     src/fs_path_property.cpp
@@ -49,12 +52,16 @@ generate_export_header(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+ament_target_dependencies(${PROJECT_NAME}
+    sensor_msgs
+    geometry_msgs
+)
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_VISIBILITY_PRESET "hidden"
     VISIBILITY_INLINES_HIDDEN ON
     AUTOMOC ON
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME}
     jsoncpp_lib
     pluginlib::pluginlib
     rviz_common::rviz_common

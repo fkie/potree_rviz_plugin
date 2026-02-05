@@ -22,6 +22,14 @@ XYZ or PTX files.
 The plugin currently supports uncompressed RGB point clouds created
 with converter versions 1.6 up to 2.1.
 
+Streaming
+---------
+
+In addition to loading Potree datasets from disk, the display can now subscribe
+to a ``sensor_msgs/PointCloud`` topic and build an octree-based
+level-of-detail representation on the fly. Select *ROS Topic* as the source in
+RViz, choose the topic, and tweak the streaming LOD parameters if required.
+
 Acknowledgements
 ----------------
 
@@ -34,4 +42,3 @@ This plugin has been inspired by a similar
 written by Simon Fraiss.
 
 .. |rviz| image:: https://raw.githubusercontent.com/fkie/potree_rviz_plugin/master/screenshot.png
-

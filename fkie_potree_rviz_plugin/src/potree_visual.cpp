@@ -64,6 +64,8 @@ PotreeVisual::PotreeVisual(const std::shared_ptr<CloudLoader>& loader, Ogre::Sce
 PotreeVisual::~PotreeVisual()
 {
     scene_manager_->removeListener(this);
+    if (root_node_)
+        root_node_->detachFromScene(true);
     // We delete everything explicitly that might access the scene node
     loaded_.clear();
     loading_thread_.reset();

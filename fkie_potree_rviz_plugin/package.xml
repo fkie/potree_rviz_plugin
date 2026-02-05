@@ -15,6 +15,8 @@
     <depend>rviz_common</depend>
     <depend>rviz_ogre_vendor</depend>
     <depend>rviz_rendering</depend>
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
 
     <build_depend>libjsoncpp-dev</build_depend>
 
