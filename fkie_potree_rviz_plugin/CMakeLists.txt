@@ -21,6 +21,7 @@
 cmake_minimum_required(VERSION 3.13...3.28)
 project(fkie_potree_rviz_plugin VERSION 3.0.0)
 
+include(GNUInstallDirs)
 include(GenerateExportHeader)
 
 # Dependencies
@@ -63,11 +64,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 
 # Installation
-install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
-)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(DIRECTORY icons
     DESTINATION share/${PROJECT_NAME}
